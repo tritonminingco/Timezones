@@ -1,7 +1,7 @@
 /**
  * TeamTimezoneLanding.tsx
  * 
- * A deployable landing page that displays Jorge's team timezone board 
+ * A deployable landing page that displays team timezone board 
  * showing real-time local times for team members across different time zones.
  * 
  * Features:
@@ -11,7 +11,7 @@
  * - Professional landing page design
  * - Responsive layout for all devices
  *  - 
- * Author: Jorge Pimentel
+ * Author: Jorge P
  * Created: August 2025
  * 
  * Dependencies:
