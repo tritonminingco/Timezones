@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/luxon": "^3.7.1",
+    "@vercel/blob": "^1.1.1",
     "@vercel/postgres": "^0.10.0",
     "luxon": "^3.7.1",
     "next": "15.4.6",

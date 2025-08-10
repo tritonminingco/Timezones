@@ -1,7 +1,7 @@
 /**
  * Custom React Hook for Team Members API
  * 
- * Provides functions to interact with the shared database
+ * Provides functions to interact with the Vercel Postgres database
  * Handles loading states, error handling, and data synchronization
  */
 
@@ -53,15 +53,17 @@ export function useTeamMembers(): UseTeamMembersReturn {
     }
   }, []);
 
-  // Add new team member to database
-  const addMember = useCallback(async (newMember: Omit<TeamMember, 'id' | 'created_at'>): Promise<boolean> => {
+  // Add a new team member to database
+  const addMember = useCallback(async (memberData: Omit<TeamMember, 'id' | 'created_at'>): Promise<boolean> => {
     try {
+      setError(null);
+      
       const response = await fetch('/api/team-members', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newMember),
+        body: JSON.stringify(memberData),
       });
 
       const result = await response.json();
@@ -81,9 +83,11 @@ export function useTeamMembers(): UseTeamMembersReturn {
     }
   }, []);
 
-  // Remove team member from database
+  // Remove a team member from database
   const removeMember = useCallback(async (id: number): Promise<boolean> => {
     try {
+      setError(null);
+      
       const response = await fetch(`/api/team-members?id=${id}`, {
         method: 'DELETE',
       });
@@ -91,7 +95,7 @@ export function useTeamMembers(): UseTeamMembersReturn {
       const result = await response.json();
 
       if (result.success) {
-        // Remove member from local state
+        // Remove the member from local state
         setMembers(prev => prev.filter(member => member.id !== id));
         return true;
       } else {
@@ -105,22 +109,14 @@ export function useTeamMembers(): UseTeamMembersReturn {
     }
   }, []);
 
-  // Manual refresh function
+  // Refresh members (public method for manual refresh)
   const refreshMembers = useCallback(async () => {
     await fetchMembers();
   }, [fetchMembers]);
 
-  // Auto-refresh every 30 seconds to sync with other users
+  // Fetch members on component mount
   useEffect(() => {
-    // Initial fetch
     fetchMembers();
-
-    // Set up auto-refresh interval
-    const interval = setInterval(() => {
-      fetchMembers();
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
   }, [fetchMembers]);
 
   return {

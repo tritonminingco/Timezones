@@ -245,25 +245,25 @@ const TimezoneBoard: React.FC = () => {
 
         {/* Add New Team Member Form - Collapsible */}
         <details className="mb-6">
-          <summary className="cursor-pointer text-lg font-semibold text-gray-700 hover:text-blue-600 transition-colors">
+          <summary className="cursor-pointer text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors border-2 border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50">
             ➕ Add New Team Member
           </summary>
 
           <form
             onSubmit={handleSubmit}
-            className="mt-4 space-y-4 p-4 bg-gray-50 rounded-lg"
+            className="mt-4 space-y-4 p-6 bg-white border-2 border-gray-200 rounded-lg shadow-sm"
           >
             <div className="grid md:grid-cols-3 gap-4">
               {/* Name input field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)} // Update name state on input change
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Maria"
                   required // HTML5 validation
                   disabled={loading}
@@ -272,14 +272,14 @@ const TimezoneBoard: React.FC = () => {
 
               {/* Location input field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Location
                 </label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)} // Update location state on input change
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Tokyo, Japan"
                   required // HTML5 validation
                   disabled={loading}
@@ -288,13 +288,13 @@ const TimezoneBoard: React.FC = () => {
 
               {/* Timezone input field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
                   Timezone
                 </label>
                 <select
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)} // Update timezone state on input change
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   required // HTML5 validation
                   disabled={loading}
                 >
@@ -429,13 +429,15 @@ const TimezoneBoard: React.FC = () => {
             </div>
 
             {/* Submit button */}
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
-            >
-              {loading ? 'Adding...' : 'Add Team Member'}
-            </button>
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                disabled={loading}
+              >
+                {loading ? '⏳ Adding...' : '✅ Add Team Member'}
+              </button>
+            </div>
           </form>
         </details>
 
