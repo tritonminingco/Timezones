@@ -2,10 +2,10 @@
  * API Routes for Team Members
  * 
  * Handles CRUD operations for team members in the timezone board
- * Uses Vercel Blob for shared data storage
+ * Uses Vercel Blob for shared data storage (following official docs pattern)
  */
 
-import { put, list } from '@vercel/blob';
+import { del, list, put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 
 // TypeScript interface for team member
@@ -31,7 +31,7 @@ const INITIAL_TEAM: TeamMember[] = [
   {
     id: 2,
     name: "Phillip",
-    location: "Hanoi, Vietnam", 
+    location: "Hanoi, Vietnam",
     timezone: "Asia/Ho_Chi_Minh",
     flag: "🇻🇳",
     created_at: new Date().toISOString()
@@ -46,24 +46,36 @@ const INITIAL_TEAM: TeamMember[] = [
   }
 ];
 
-const TEAM_DATA_FILE = 'team-members.json';
+const TEAM_DATA_FILENAME = 'team-members.json';
 
 // Helper function to get all team members from blob storage
 async function getTeamMembers(): Promise<TeamMember[]> {
   try {
-    const { blobs } = await list({ prefix: TEAM_DATA_FILE });
-    
+    console.log('Getting team members from blob...');
+    const { blobs } = await list({ prefix: TEAM_DATA_FILENAME });
+    console.log('Found blobs:', blobs.length);
+
     if (blobs.length === 0) {
-      // Initialize with default team if no data exists
+      console.log('No existing data, initializing with default team');
       await saveTeamMembers(INITIAL_TEAM);
       return INITIAL_TEAM;
     }
 
-    const response = await fetch(blobs[0].url);
+    // Get the most recent blob (in case of multiple versions)
+    const latestBlob = blobs[0];
+    console.log('Fetching data from blob URL:', latestBlob.url);
+
+    const response = await fetch(latestBlob.url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch blob: ${response.status}`);
+    }
+
     const data = await response.json();
+    console.log('Successfully retrieved team members:', data.length);
     return data;
   } catch (error) {
     console.error('Error getting team members:', error);
+    console.log('Falling back to initial team');
     return INITIAL_TEAM;
   }
 }
@@ -71,30 +83,54 @@ async function getTeamMembers(): Promise<TeamMember[]> {
 // Helper function to save team members to blob storage
 async function saveTeamMembers(members: TeamMember[]): Promise<void> {
   try {
-    const blob = await put(TEAM_DATA_FILE, JSON.stringify(members), {
+    console.log('Saving team members to blob:', members.length, 'members');
+    console.log('BLOB_READ_WRITE_TOKEN exists:', !!process.env.BLOB_READ_WRITE_TOKEN);
+
+    // Convert to JSON string
+    const jsonData = JSON.stringify(members, null, 2);
+    console.log('JSON data size:', jsonData.length, 'characters');
+
+    // Delete existing file first (to avoid multiple versions)
+    try {
+      const { blobs } = await list({ prefix: TEAM_DATA_FILENAME });
+      for (const blob of blobs) {
+        await del(blob.url);
+      }
+    } catch (delError) {
+      console.log('No existing file to delete or delete failed:', delError);
+    }
+
+    // Upload new data following Vercel docs pattern
+    const blob = await put(TEAM_DATA_FILENAME, jsonData, {
       access: 'public',
       contentType: 'application/json',
     });
-    console.log('Team members saved to blob:', blob.url);
+
+    console.log('Successfully saved team members to blob:', blob.url);
   } catch (error) {
-    console.error('Error saving team members:', error);
-    throw error;
+    console.error('Error saving team members to blob:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Detailed error:', errorMessage);
+    throw new Error(`Failed to save to blob: ${errorMessage}`);
   }
 }
 
 // GET: Fetch all team members
 export async function GET() {
   try {
+    console.log('GET /api/team-members called');
     const members = await getTeamMembers();
-    
-    return NextResponse.json({ 
-      success: true, 
-      data: members 
+    console.log('Returning members:', members.length);
+
+    return NextResponse.json({
+      success: true,
+      data: members
     });
   } catch (error) {
-    console.error('Error fetching team members:', error);
+    console.error('GET Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch team members' },
+      { success: false, error: `Failed to fetch team members: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -103,44 +139,57 @@ export async function GET() {
 // POST: Add new team member
 export async function POST(request: NextRequest) {
   try {
+    console.log('POST /api/team-members called');
     const body = await request.json();
+    console.log('Request body received:', body);
+
     const { name, location, timezone, flag = "🌍" } = body;
 
     // Validation
     if (!name || !location || !timezone) {
+      console.log('Validation failed - missing fields:', { name: !!name, location: !!location, timezone: !!timezone });
       return NextResponse.json(
         { success: false, error: 'Name, location, and timezone are required' },
         { status: 400 }
       );
     }
 
-    // Get current members
+    console.log('Validation passed, getting current members...');
     const currentMembers = await getTeamMembers();
-    
+    console.log('Current members retrieved:', currentMembers.length);
+
     // Create new team member
     const newMember: TeamMember = {
-      id: Date.now(), // Simple ID generation
+      id: Date.now(),
       name,
       location,
       timezone,
       flag,
       created_at: new Date().toISOString()
     };
+    console.log('New member created:', newMember);
 
     // Add to members array
     const updatedMembers = [...currentMembers, newMember];
-    
-    // Save back to blob storage
-    await saveTeamMembers(updatedMembers);
+    console.log('Updated members array length:', updatedMembers.length);
 
-    return NextResponse.json({ 
-      success: true, 
-      data: newMember 
+    // Save back to blob storage
+    console.log('Attempting to save to blob...');
+    await saveTeamMembers(updatedMembers);
+    console.log('Successfully saved to blob');
+
+    return NextResponse.json({
+      success: true,
+      data: newMember
     });
   } catch (error) {
-    console.error('Error adding team member:', error);
+    console.error('POST Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    console.error('Error details:', { message: errorMessage, stack: errorStack });
+
     return NextResponse.json(
-      { success: false, error: 'Failed to add team member' },
+      { success: false, error: `Failed to add team member: ${errorMessage}` },
       { status: 500 }
     );
   }
@@ -162,7 +211,7 @@ export async function DELETE(request: NextRequest) {
     // Get current members
     const currentMembers = await getTeamMembers();
     const memberId = parseInt(id);
-    
+
     // Filter out the member with matching ID
     const updatedMembers = currentMembers.filter(member => member.id !== memberId);
 
@@ -176,9 +225,9 @@ export async function DELETE(request: NextRequest) {
     // Save updated members back to blob storage
     await saveTeamMembers(updatedMembers);
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Team member deleted successfully' 
+    return NextResponse.json({
+      success: true,
+      message: 'Team member deleted successfully'
     });
   } catch (error) {
     console.error('Error deleting team member:', error);

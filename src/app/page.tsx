@@ -36,13 +36,14 @@ import { useTeamMembers } from "../hooks/useTeamMembers"; // Custom hook for sha
  */
 const TimezoneBoard: React.FC = () => {
   // Shared database state using custom hook
-  const { members, loading, error, addMember, removeMember, refreshMembers } = useTeamMembers();
-  
+  const { members, loading, error, addMember, removeMember, refreshMembers } =
+    useTeamMembers();
+
   // Form state for adding new members
   const [name, setName] = useState(""); // Form input for new member's name
   const [location, setLocation] = useState(""); // Form input for location
   const [timezone, setTimezone] = useState("America/New_York"); // Default timezone
-  
+
   // Time state
   const [currentTime, setCurrentTime] = useState(DateTime.now()); // Current time for real-time updates
   const [mounted, setMounted] = useState(false); // Track if component has mounted to prevent hydration issues
@@ -125,14 +126,18 @@ const TimezoneBoard: React.FC = () => {
               : "Loading..."}{" "}
             UTC
           </div>
-          
+
           {/* Database status indicator */}
           <div className="mt-2 flex items-center justify-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                loading ? "bg-yellow-500" : "bg-green-500"
+              }`}
+            ></div>
             <span className="text-xs text-gray-500">
-              {loading ? 'Syncing...' : 'Connected • Auto-sync every 30s'}
+              {loading ? "Syncing..." : "Connected • Auto-sync every 30s"}
             </span>
-            <button 
+            <button
               onClick={refreshMembers}
               className="text-xs text-blue-600 hover:text-blue-800 ml-2"
               disabled={loading}
@@ -263,7 +268,7 @@ const TimezoneBoard: React.FC = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)} // Update name state on input change
-                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full text-gray-800 border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Maria"
                   required // HTML5 validation
                   disabled={loading}
@@ -279,7 +284,7 @@ const TimezoneBoard: React.FC = () => {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)} // Update location state on input change
-                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full text-gray-800 border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g., Tokyo, Japan"
                   required // HTML5 validation
                   disabled={loading}
@@ -294,7 +299,7 @@ const TimezoneBoard: React.FC = () => {
                 <select
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)} // Update timezone state on input change
-                  className="w-full border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  className="w-full border-2 text-gray-800 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   required // HTML5 validation
                   disabled={loading}
                 >
@@ -303,7 +308,9 @@ const TimezoneBoard: React.FC = () => {
                     <option value="America/New_York">Eastern Time (ET)</option>
                     <option value="America/Chicago">Central Time (CT)</option>
                     <option value="America/Denver">Mountain Time (MT)</option>
-                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="America/Los_Angeles">
+                      Pacific Time (PT)
+                    </option>
                     <option value="America/Anchorage">Alaska Time (AKT)</option>
                     <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
                     <option value="America/Toronto">Toronto, Canada</option>
@@ -313,12 +320,18 @@ const TimezoneBoard: React.FC = () => {
 
                   {/* Central & South America */}
                   <optgroup label="🌎 Central & South America">
-                    <option value="America/Mexico_City">Mexico City, Mexico</option>
-                    <option value="America/Guatemala">Guatemala City, Guatemala</option>
+                    <option value="America/Mexico_City">
+                      Mexico City, Mexico
+                    </option>
+                    <option value="America/Guatemala">
+                      Guatemala City, Guatemala
+                    </option>
                     <option value="America/Bogota">Bogotá, Colombia</option>
                     <option value="America/Lima">Lima, Peru</option>
                     <option value="America/Santiago">Santiago, Chile</option>
-                    <option value="America/Buenos_Aires">Buenos Aires, Argentina</option>
+                    <option value="America/Buenos_Aires">
+                      Buenos Aires, Argentina
+                    </option>
                     <option value="America/Sao_Paulo">São Paulo, Brazil</option>
                     <option value="America/Caracas">Caracas, Venezuela</option>
                     <option value="America/Panama">Panama City, Panama</option>
@@ -332,18 +345,24 @@ const TimezoneBoard: React.FC = () => {
                     <option value="Europe/Berlin">Berlin, Germany</option>
                     <option value="Europe/Rome">Rome, Italy</option>
                     <option value="Europe/Madrid">Madrid, Spain</option>
-                    <option value="Europe/Amsterdam">Amsterdam, Netherlands</option>
+                    <option value="Europe/Amsterdam">
+                      Amsterdam, Netherlands
+                    </option>
                     <option value="Europe/Brussels">Brussels, Belgium</option>
                     <option value="Europe/Zurich">Zurich, Switzerland</option>
                     <option value="Europe/Vienna">Vienna, Austria</option>
-                    <option value="Europe/Prague">Prague, Czech Republic</option>
+                    <option value="Europe/Prague">
+                      Prague, Czech Republic
+                    </option>
                     <option value="Europe/Warsaw">Warsaw, Poland</option>
                     <option value="Europe/Budapest">Budapest, Hungary</option>
                     <option value="Europe/Bucharest">Bucharest, Romania</option>
                     <option value="Europe/Athens">Athens, Greece</option>
                     <option value="Europe/Stockholm">Stockholm, Sweden</option>
                     <option value="Europe/Oslo">Oslo, Norway</option>
-                    <option value="Europe/Copenhagen">Copenhagen, Denmark</option>
+                    <option value="Europe/Copenhagen">
+                      Copenhagen, Denmark
+                    </option>
                     <option value="Europe/Helsinki">Helsinki, Finland</option>
                     <option value="Europe/Riga">Riga, Latvia</option>
                     <option value="Europe/Tallinn">Tallinn, Estonia</option>
@@ -358,12 +377,18 @@ const TimezoneBoard: React.FC = () => {
                     <option value="Africa/Cairo">Cairo, Egypt</option>
                     <option value="Africa/Lagos">Lagos, Nigeria</option>
                     <option value="Africa/Nairobi">Nairobi, Kenya</option>
-                    <option value="Africa/Johannesburg">Johannesburg, South Africa</option>
-                    <option value="Africa/Casablanca">Casablanca, Morocco</option>
+                    <option value="Africa/Johannesburg">
+                      Johannesburg, South Africa
+                    </option>
+                    <option value="Africa/Casablanca">
+                      Casablanca, Morocco
+                    </option>
                     <option value="Africa/Tunis">Tunis, Tunisia</option>
                     <option value="Africa/Algiers">Algiers, Algeria</option>
                     <option value="Africa/Accra">Accra, Ghana</option>
-                    <option value="Africa/Addis_Ababa">Addis Ababa, Ethiopia</option>
+                    <option value="Africa/Addis_Ababa">
+                      Addis Ababa, Ethiopia
+                    </option>
                   </optgroup>
 
                   {/* Asia */}
@@ -376,10 +401,14 @@ const TimezoneBoard: React.FC = () => {
                     <option value="Asia/Taipei">Taipei, Taiwan</option>
                     <option value="Asia/Singapore">Singapore</option>
                     <option value="Asia/Bangkok">Bangkok, Thailand</option>
-                    <option value="Asia/Ho_Chi_Minh">Ho Chi Minh City, Vietnam</option>
+                    <option value="Asia/Ho_Chi_Minh">
+                      Ho Chi Minh City, Vietnam
+                    </option>
                     <option value="Asia/Jakarta">Jakarta, Indonesia</option>
                     <option value="Asia/Manila">Manila, Philippines</option>
-                    <option value="Asia/Kuala_Lumpur">Kuala Lumpur, Malaysia</option>
+                    <option value="Asia/Kuala_Lumpur">
+                      Kuala Lumpur, Malaysia
+                    </option>
                     <option value="Asia/Kolkata">Mumbai, India</option>
                     <option value="Asia/Delhi">Delhi, India</option>
                     <option value="Asia/Dhaka">Dhaka, Bangladesh</option>
@@ -399,20 +428,34 @@ const TimezoneBoard: React.FC = () => {
                     <option value="Asia/Tbilisi">Tbilisi, Georgia</option>
                     <option value="Asia/Almaty">Almaty, Kazakhstan</option>
                     <option value="Asia/Tashkent">Tashkent, Uzbekistan</option>
-                    <option value="Asia/Novosibirsk">Novosibirsk, Russia</option>
-                    <option value="Asia/Vladivostok">Vladivostok, Russia</option>
+                    <option value="Asia/Novosibirsk">
+                      Novosibirsk, Russia
+                    </option>
+                    <option value="Asia/Vladivostok">
+                      Vladivostok, Russia
+                    </option>
                   </optgroup>
 
                   {/* Australia & Oceania */}
                   <optgroup label="🇦🇺 Australia & Oceania">
                     <option value="Australia/Sydney">Sydney, Australia</option>
-                    <option value="Australia/Melbourne">Melbourne, Australia</option>
-                    <option value="Australia/Brisbane">Brisbane, Australia</option>
+                    <option value="Australia/Melbourne">
+                      Melbourne, Australia
+                    </option>
+                    <option value="Australia/Brisbane">
+                      Brisbane, Australia
+                    </option>
                     <option value="Australia/Perth">Perth, Australia</option>
-                    <option value="Australia/Adelaide">Adelaide, Australia</option>
+                    <option value="Australia/Adelaide">
+                      Adelaide, Australia
+                    </option>
                     <option value="Australia/Darwin">Darwin, Australia</option>
-                    <option value="Pacific/Auckland">Auckland, New Zealand</option>
-                    <option value="Pacific/Wellington">Wellington, New Zealand</option>
+                    <option value="Pacific/Auckland">
+                      Auckland, New Zealand
+                    </option>
+                    <option value="Pacific/Wellington">
+                      Wellington, New Zealand
+                    </option>
                     <option value="Pacific/Fiji">Suva, Fiji</option>
                     <option value="Pacific/Honolulu">Honolulu, Hawaii</option>
                     <option value="Pacific/Guam">Guam</option>
@@ -420,7 +463,9 @@ const TimezoneBoard: React.FC = () => {
 
                   {/* Atlantic */}
                   <optgroup label="🌊 Atlantic">
-                    <option value="Atlantic/Reykjavik">Reykjavik, Iceland</option>
+                    <option value="Atlantic/Reykjavik">
+                      Reykjavik, Iceland
+                    </option>
                     <option value="Atlantic/Azores">Azores, Portugal</option>
                     <option value="Atlantic/Cape_Verde">Cape Verde</option>
                   </optgroup>
@@ -435,7 +480,7 @@ const TimezoneBoard: React.FC = () => {
                 className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                 disabled={loading}
               >
-                {loading ? '⏳ Adding...' : '✅ Add Team Member'}
+                {loading ? "⏳ Adding..." : "✅ Add Team Member"}
               </button>
             </div>
           </form>
@@ -444,7 +489,8 @@ const TimezoneBoard: React.FC = () => {
         {/* Footer */}
         <div className="text-center pt-6 border-t border-gray-200">
           <p className="text-gray-500 text-sm">
-            Built with ❤️ by Jorge Pimentel • Updated in real-time • Shared across all users
+            Built with ❤️ by Jorge Pimentel • Updated in real-time • Shared
+            across all users
           </p>
           <p className="text-gray-400 text-xs mt-1">
             Powered by Vercel Postgres Database

@@ -5,7 +5,7 @@
  * Handles loading states, error handling, and data synchronization
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // TypeScript interface for team member
 interface TeamMember {
@@ -36,7 +36,7 @@ export function useTeamMembers(): UseTeamMembersReturn {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/team-members');
       const result = await response.json();
 
@@ -57,7 +57,7 @@ export function useTeamMembers(): UseTeamMembersReturn {
   const addMember = useCallback(async (memberData: Omit<TeamMember, 'id' | 'created_at'>): Promise<boolean> => {
     try {
       setError(null);
-      
+
       const response = await fetch('/api/team-members', {
         method: 'POST',
         headers: {
@@ -87,7 +87,7 @@ export function useTeamMembers(): UseTeamMembersReturn {
   const removeMember = useCallback(async (id: number): Promise<boolean> => {
     try {
       setError(null);
-      
+
       const response = await fetch(`/api/team-members?id=${id}`, {
         method: 'DELETE',
       });
