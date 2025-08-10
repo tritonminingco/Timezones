@@ -114,7 +114,7 @@ const TimezoneBoard: React.FC = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
-            🌐 Jorge&apos;s Team Timezone Board
+            🌐 Triton Team Timezone Dashboard
           </h1>
           <p className="text-gray-600 text-lg">
             Real-time collaboration across continents
@@ -122,7 +122,7 @@ const TimezoneBoard: React.FC = () => {
           <div className="mt-4 text-sm text-gray-500">
             Updated every second •{" "}
             {mounted
-              ? currentTime.toFormat("MMMM dd, yyyy 'at' HH:mm:ss")
+              ? currentTime.toFormat("MMMM dd, yyyy 'at' h:mm:ss a")
               : "Loading..."}{" "}
             UTC
           </div>
@@ -193,8 +193,8 @@ const TimezoneBoard: React.FC = () => {
                       {/* Current local time with larger, prominent display */}
                       <p className="text-2xl md:text-3xl font-mono font-bold text-blue-600">
                         {mounted && localTime
-                          ? localTime.toFormat("HH:mm:ss")
-                          : "--:--:--"}
+                          ? localTime.toFormat("h:mm:ss a")
+                          : "--:--:-- --"}
                       </p>
                       <p className="text-sm text-gray-600">
                         {mounted && localTime
