@@ -10,7 +10,9 @@
  * - Add additional team members if needed
  * - Professional landing page design
  * - Responsive layout for all devices
- *  -
+ * - SHARED DATABASE: All users see the same team members
+ * - Auto-sync every 30 seconds
+ *
  * Author: Jorge Pimentel
  * Created: August 2025
  *
@@ -18,57 +20,30 @@
  * - React (hooks: useState, useEffect)
  * - Luxon (DateTime for timezone calculations)
  * - TailwindCSS (for styling)
+ * - Vercel Postgres (shared database)
  */
 
 "use client";
 
 import { DateTime } from "luxon"; // Luxon library for robust date/time handling across timezones
 import React, { useEffect, useState } from "react";
-
-// TypeScript interface defining the structure of a team member
-interface User {
-  id: number; // Unique identifier for each user
-  name: string; // Team member's display name
-  location: string; // City/Country for display
-  timezone: string; // IANA timezone identifier (e.g., "America/New_York")
-  flag: string; // Emoji flag for visual appeal
-}
-
-// Pre-defined team members with their locations and timezones
-const INITIAL_TEAM: User[] = [
-  {
-    id: 1,
-    name: "Jorge Pimentel",
-    location: "Florida, USA",
-    timezone: "America/New_York", // Florida uses Eastern Time
-    flag: "🇺🇸",
-  },
-  {
-    id: 2,
-    name: "Phillip",
-    location: "Hanoi, Vietnam",
-    timezone: "Asia/Ho_Chi_Minh", // Vietnam timezone
-    flag: "🇻🇳",
-  },
-  {
-    id: 3,
-    name: "Kevin",
-    location: "Riga, Latvia",
-    timezone: "Europe/Riga", // Latvia timezone
-    flag: "🇱🇻",
-  },
-];
+import { useTeamMembers } from "../hooks/useTeamMembers"; // Custom hook for shared database
 
 /**
- * Main TimezoneBoard component - Now a deployable landing page
+ * Main TimezoneBoard component - Now with shared database
  * Manages the state and rendering of the team timezone dashboard
+ * Data is shared between all users accessing the page
  */
 const TimezoneBoard: React.FC = () => {
-  // State management for the component
-  const [users, setUsers] = useState<User[]>(INITIAL_TEAM); // Start with pre-loaded team
+  // Shared database state using custom hook
+  const { members, loading, error, addMember, removeMember, refreshMembers } = useTeamMembers();
+  
+  // Form state for adding new members
   const [name, setName] = useState(""); // Form input for new member's name
   const [location, setLocation] = useState(""); // Form input for location
   const [timezone, setTimezone] = useState("America/New_York"); // Default timezone
+  
+  // Time state
   const [currentTime, setCurrentTime] = useState(DateTime.now()); // Current time for real-time updates
   const [mounted, setMounted] = useState(false); // Track if component has mounted to prevent hydration issues
 
@@ -85,41 +60,50 @@ const TimezoneBoard: React.FC = () => {
   }, []);
 
   /**
-   * Handles form submission to add a new team member
+   * Handles form submission to add a new team member to shared database
    * @param e - React form event
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent page reload on form submission
 
     // Validation: ensure name, location and timezone are provided
     if (!name || !location || !timezone) return;
 
-    // Create new user object
-    const newUser: User = {
-      id: Date.now(), // Use timestamp as unique ID (simple but effective for demo)
+    // Add member to shared database
+    const success = await addMember({
       name,
       location,
       timezone,
       flag: "🌍", // Default flag for new members
-    };
+    });
 
-    // Add new user to the users array using spread operator to maintain immutability
-    setUsers([...users, newUser]);
-
-    // Reset form fields after successful submission
-    setName("");
-    setLocation("");
-    setTimezone("America/New_York"); // Reset to default
+    if (success) {
+      // Reset form fields after successful submission
+      setName("");
+      setLocation("");
+      setTimezone("America/New_York"); // Reset to default
+    }
   };
 
   /**
-   * Removes a team member from the board
+   * Removes a team member from the shared database
    * @param id - Unique identifier of the user to remove
    */
-  const handleDelete = (id: number) => {
-    // Filter out the user with the matching ID
-    setUsers(users.filter((user) => user.id !== id));
+  const handleDelete = async (id: number) => {
+    await removeMember(id);
   };
+
+  // Show loading state
+  if (loading && members.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading team timezone board...</p>
+        </div>
+      </div>
+    );
+  }
 
   // JSX return - The landing page UI structure
   return (
@@ -141,14 +125,36 @@ const TimezoneBoard: React.FC = () => {
               : "Loading..."}{" "}
             UTC
           </div>
+          
+          {/* Database status indicator */}
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${loading ? 'bg-yellow-500' : 'bg-green-500'}`}></div>
+            <span className="text-xs text-gray-500">
+              {loading ? 'Syncing...' : 'Connected • Auto-sync every 30s'}
+            </span>
+            <button 
+              onClick={refreshMembers}
+              className="text-xs text-blue-600 hover:text-blue-800 ml-2"
+              disabled={loading}
+            >
+              Refresh
+            </button>
+          </div>
+
+          {/* Error display */}
+          {error && (
+            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
         </div>
 
         {/* Team Members Display - Main Feature */}
         <div className="grid gap-6 md:gap-4 mb-8">
-          {users.map((user) => {
+          {members.map((member) => {
             // Calculate the current local time for this user's timezone using Luxon
             const localTime = mounted
-              ? currentTime.setZone(user.timezone)
+              ? currentTime.setZone(member.timezone)
               : null;
             const isWorkingHours = localTime
               ? localTime.hour >= 9 && localTime.hour <= 17
@@ -156,7 +162,7 @@ const TimezoneBoard: React.FC = () => {
 
             return (
               <div
-                key={user.id} // React key for efficient rendering
+                key={member.id} // React key for efficient rendering
                 className={`p-6 border-2 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md ${
                   isWorkingHours
                     ? "bg-green-50 border-green-200"
@@ -168,12 +174,12 @@ const TimezoneBoard: React.FC = () => {
                   <div className="flex-1">
                     {/* User's name and location */}
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{user.flag}</span>
+                      <span className="text-2xl">{member.flag}</span>
                       <div>
                         <h2 className="text-xl md:text-2xl font-bold text-gray-800">
-                          {user.name}
+                          {member.name}
                         </h2>
-                        <p className="text-gray-600">{user.location}</p>
+                        <p className="text-gray-600">{member.location}</p>
                       </div>
                     </div>
 
@@ -196,7 +202,7 @@ const TimezoneBoard: React.FC = () => {
                         {mounted && localTime
                           ? localTime.offsetNameShort
                           : "--"}{" "}
-                        • {user.timezone}
+                        • {member.timezone}
                       </p>
 
                       {/* Working hours indicator */}
@@ -222,10 +228,11 @@ const TimezoneBoard: React.FC = () => {
                   </div>
 
                   {/* Remove button for deleting this team member */}
-                  {users.length > 1 && (
+                  {members.length > 1 && (
                     <button
-                      onClick={() => handleDelete(user.id)} // Call delete function with user ID
+                      onClick={() => handleDelete(member.id)} // Call delete function with user ID
                       className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200 text-sm"
+                      disabled={loading}
                     >
                       Remove
                     </button>
@@ -259,6 +266,7 @@ const TimezoneBoard: React.FC = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., Maria"
                   required // HTML5 validation
+                  disabled={loading}
                 />
               </div>
 
@@ -274,6 +282,7 @@ const TimezoneBoard: React.FC = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., Tokyo, Japan"
                   required // HTML5 validation
+                  disabled={loading}
                 />
               </div>
 
@@ -287,6 +296,7 @@ const TimezoneBoard: React.FC = () => {
                   onChange={(e) => setTimezone(e.target.value)} // Update timezone state on input change
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required // HTML5 validation
+                  disabled={loading}
                 >
                   <option value="America/New_York">Eastern Time (US)</option>
                   <option value="America/Chicago">Central Time (US)</option>
@@ -314,9 +324,10 @@ const TimezoneBoard: React.FC = () => {
             {/* Submit button */}
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              Add Team Member
+              {loading ? 'Adding...' : 'Add Team Member'}
             </button>
           </form>
         </details>
@@ -324,7 +335,10 @@ const TimezoneBoard: React.FC = () => {
         {/* Footer */}
         <div className="text-center pt-6 border-t border-gray-200">
           <p className="text-gray-500 text-sm">
-            Built with ❤️ by Jorge Pimentel • Updated in real-time
+            Built with ❤️ by Jorge Pimentel • Updated in real-time • Shared across all users
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            Powered by Vercel Postgres Database
           </p>
         </div>
       </div>
