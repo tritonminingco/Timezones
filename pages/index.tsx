@@ -36,7 +36,7 @@ interface User {
 const INITIAL_TEAM: User[] = [
   {
     id: 1,
-    name: "Jorge Pimentel",
+    name: "Jorge",
     location: "Florida, USA",
     timezone: "America/New_York", // Florida uses Eastern Time
     flag: "🇺🇸"
@@ -54,6 +54,20 @@ const INITIAL_TEAM: User[] = [
     location: "Riga, Latvia",
     timezone: "Europe/Riga", // Latvia timezone
     flag: "🇱🇻"
+  },
+  {
+    id: 4,
+    name: "Caleb",
+    location: "Nigeria, Abuja",
+    timezone: "Australia/Sydney",
+    flag: "NG"
+  },
+  {
+    id: 6,
+    name: "Lewis Bright",
+    location: "London, UK",
+    timezone: "Europe/London",
+    flag: "🇬🇧"
   }
 ];
 
@@ -134,73 +148,79 @@ const TimezoneBoard: React.FC = () => {
           </div>
         </div>
 
-        {/* Team Members Display - Main Feature */}
-        <div className="grid gap-6 md:gap-4 mb-8">
+        {/*
+         * =============================
+         * TEAM MEMBERS DASHBOARD BLOCKS
+         * =============================
+         * Display all team members as blocks in a responsive grid.
+         * Each block shows name, location, local time, and work status.
+         * Blocks are placed next to each other for a comprehensive overview.
+         */}
+        <div
+          className="grid gap-4 mb-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+        >
           {users.map((user) => {
             // Calculate the current local time for this user's timezone using Luxon
             const localTime = currentTime.setZone(user.timezone);
             const isWorkingHours = localTime.hour >= 9 && localTime.hour <= 17;
-            
+
             return (
               <div
                 key={user.id} // React key for efficient rendering
-                className={`p-6 border-2 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md ${
-                  isWorkingHours 
-                    ? 'bg-green-50 border-green-200' 
+                className={`flex flex-col justify-between h-full p-4 border-2 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md ${
+                  isWorkingHours
+                    ? 'bg-green-50 border-green-200'
                     : 'bg-gray-50 border-gray-200'
                 }`}
+                style={{ minWidth: 0 }}
               >
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                  {/* User information display */}
-                  <div className="flex-1">
-                    {/* User's name and location */}
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{user.flag}</span>
-                      <div>
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">{user.name}</h2>
-                        <p className="text-gray-600">{user.location}</p>
-                      </div>
-                    </div>
-                    
-                    {/* Time information */}
-                    <div className="space-y-1">
-                      {/* Current local time with larger, prominent display */}
-                      <p className="text-2xl md:text-3xl font-mono font-bold text-blue-600">
-                        {localTime.toFormat("HH:mm:ss")}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {localTime.toFormat("cccc, MMMM dd")}
-                      </p>
-                      
-                      {/* Timezone information */}
-                      <p className="text-xs text-gray-500">
-                        {localTime.offsetNameShort} • {user.timezone}
-                      </p>
-                      
-                      {/* Working hours indicator */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          isWorkingHours ? 'bg-green-500' : 'bg-gray-400'
-                        }`}></div>
-                        <span className={`text-xs font-medium ${
-                          isWorkingHours ? 'text-green-700' : 'text-gray-500'
-                        }`}>
-                          {isWorkingHours ? 'Working Hours (9 AM - 5 PM)' : 'Outside Working Hours'}
-                        </span>
-                      </div>
-                    </div>
+                {/*
+                 * --- USER INFO BLOCK ---
+                 */}
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">{user.flag}</span>
+                  <div>
+                    <h2 className="text-lg md:text-xl font-bold text-gray-800">{user.name}</h2>
+                    <p className="text-gray-600 text-sm">{user.location}</p>
                   </div>
-                  
-                  {/* Remove button for deleting this team member */}
-                  {users.length > 1 && (
-                    <button
-                      onClick={() => handleDelete(user.id)} // Call delete function with user ID
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200 text-sm"
-                    >
-                      Remove
-                    </button>
-                  )}
                 </div>
+
+                {/*
+                 * --- TIME & STATUS BLOCK ---
+                 */}
+                <div className="flex-1 flex flex-col justify-center space-y-1 mb-2">
+                  <p className="text-2xl md:text-3xl font-mono font-bold text-blue-600">
+                    {localTime.toFormat("HH:mm:ss")}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {localTime.toFormat("cccc, MMMM dd")}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {localTime.offsetNameShort} • {user.timezone}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      isWorkingHours ? 'bg-green-500' : 'bg-gray-400'
+                    }`}></div>
+                    <span className={`text-xs font-medium ${
+                      isWorkingHours ? 'text-green-700' : 'text-gray-500'
+                    }`}>
+                      {isWorkingHours ? 'Working Hours (9 AM - 5 PM)' : 'Outside Working Hours'}
+                    </span>
+                  </div>
+                </div>
+
+                {/*
+                 * --- REMOVE BUTTON BLOCK ---
+                 */}
+                {users.length > 1 && (
+                  <button
+                    onClick={() => handleDelete(user.id)}
+                    className="self-end text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200 text-xs mt-2"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             );
           })}
@@ -293,14 +313,14 @@ const TimezoneBoard: React.FC = () => {
 export default TimezoneBoard;
 
 /**
- * DEPLOYMENT NOTES FOR JORGE'S TEAM:
+ * DEPLOYMENT NOTES FOR TEAM:
  * 
  * 🚀 READY TO DEPLOY LANDING PAGE
  * 
  * This is now a fully functional landing page showing your team's real-time timezones!
  * 
  * PRE-LOADED TEAM MEMBERS:
- * - Jorge Pimentel (Florida, USA) - Eastern Time
+ * - Jorge (Florida, USA) - Eastern Time
  * - Phillip (Hanoi, Vietnam) - Vietnam Time  
  * - Kevin (Riga, Latvia) - Latvia Time
  * 
