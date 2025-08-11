@@ -20,7 +20,8 @@
  * - React (hooks: useState, useEffect)
  * - Luxon (DateTime for timezone calculations)
  * - TailwindCSS (for styling)
- * - Vercel Postgres (shared database)
+ * - shadcn/ui components
+ * - Vercel Blob (shared storage)
  */
 
 "use client";
@@ -28,6 +29,71 @@
 import { DateTime } from "luxon"; // Luxon library for robust date/time handling across timezones
 import React, { useEffect, useState } from "react";
 import { useTeamMembers } from "../hooks/useTeamMembers"; // Custom hook for shared database
+
+// shadcn/ui components
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
+
+// Advanced CSS animations for enhanced UI experience
+const advancedStyles = `
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -200px 0;
+    }
+    100% {
+      background-position: calc(200px + 100%) 0;
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .shimmer-effect {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    background-size: 200px 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+`;
 
 /**
  * Main TimezoneBoard component - Now with shared database
@@ -53,11 +119,22 @@ const TimezoneBoard: React.FC = () => {
     setMounted(true); // Component has mounted on client
     setCurrentTime(DateTime.now()); // Set initial time after mount
 
+    // Inject advanced styles
+    const styleElement = document.createElement("style");
+    styleElement.textContent = advancedStyles;
+    document.head.appendChild(styleElement);
+
     const interval = setInterval(() => {
       setCurrentTime(DateTime.now());
     }, 1000); // Update every second
 
-    return () => clearInterval(interval); // Cleanup on unmount
+    return () => {
+      clearInterval(interval); // Cleanup on unmount
+      // Cleanup styles on unmount
+      if (document.head.contains(styleElement)) {
+        document.head.removeChild(styleElement);
+      }
+    };
   }, []);
 
   /**
@@ -97,66 +174,125 @@ const TimezoneBoard: React.FC = () => {
   // Show loading state
   if (loading && members.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading team timezone board...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200 p-4 md:p-8 flex items-center justify-center">
+        <Card className="w-full max-w-md border-neutral-200 shadow-2xl bg-white/80 backdrop-blur-sm">
+          <CardContent className="flex flex-col items-center p-12">
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full border-4 border-neutral-200 border-t-neutral-600 animate-spin mb-6"></div>
+              <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-transparent border-r-neutral-400 animate-ping"></div>
+            </div>
+            <div className="space-y-3 text-center">
+              <Skeleton className="h-5 w-56 bg-neutral-200 mx-auto" />
+              <Skeleton className="h-3 w-32 bg-neutral-100 mx-auto" />
+            </div>
+            <p className="text-neutral-600 text-sm mt-4 animate-pulse">
+              Loading team timezone board...
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   // JSX return - The landing page UI structure
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
-      {/* Main container with centered layout and styling */}
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200 p-4 md:p-8">
+      {/* Main container */}
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
-            🌐 Triton Team Timezone Dashboard
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Real-time collaboration across continents
-          </p>
-          <div className="mt-4 text-sm text-gray-500">
-            Updated every second •{" "}
-            {mounted
-              ? currentTime.toFormat("MMMM dd, yyyy 'at' h:mm:ss a")
-              : "Loading..."}{" "}
-            UTC
-          </div>
+        <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-neutral-50 to-neutral-100 backdrop-blur-sm relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]"></div>
+          <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-x-16 -translate-y-16"></div>
+          <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-blue-500/10 rounded-full translate-x-12 translate-y-12"></div>
 
-          {/* Database status indicator */}
-          <div className="mt-2 flex items-center justify-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                loading ? "bg-yellow-500" : "bg-green-500"
-              }`}
-            ></div>
-            <span className="text-xs text-gray-500">
-              {loading ? "Syncing..." : "Connected • Auto-sync every 30s"}
-            </span>
-            <button
-              onClick={refreshMembers}
-              className="text-xs text-blue-600 hover:text-blue-800 ml-2"
-              disabled={loading}
-            >
-              Refresh
-            </button>
-          </div>
-
-          {/* Error display */}
-          {error && (
-            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+          <CardHeader className="text-center pb-8 px-8 pt-12 relative">
+            <div className="space-y-6">
+              <div className="flex items-center justify-center gap-4">
+                {/* Triton Logo */}
+                <div className="relative">
+                  <Image
+                    src="/triton-logo.png"
+                    alt="Triton Logo"
+                    width={80}
+                    height={80}
+                    className="drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                    priority
+                  />
+                </div>
+                <CardTitle className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-600 bg-clip-text text-transparent tracking-tight">
+                  Triton Team
+                </CardTitle>
+              </div>
+              <CardTitle className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
+                Timezone Dashboard
+              </CardTitle>
             </div>
-          )}
-        </div>
+            <p className="text-neutral-600 text-xl md:text-2xl font-medium mt-6 leading-relaxed">
+              Real-time collaboration across continents
+            </p>
+            <div className="mt-8 inline-flex items-center gap-2 text-sm text-neutral-500 bg-white/60 backdrop-blur-sm px-6 py-3 rounded-full border border-neutral-200/60 shadow-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="font-medium">Live updates every second</span>
+              <span className="text-neutral-400">•</span>
+              <span>
+                {mounted
+                  ? currentTime.toFormat("MMMM dd, yyyy 'at' h:mm:ss a")
+                  : "Loading..."}{" "}
+                UTC
+              </span>
+            </div>
+            {/* Database status indicator */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <Badge
+                variant={loading ? "secondary" : "default"}
+                className={`gap-3 px-6 py-3 font-semibold text-sm transition-all duration-300 ${
+                  loading
+                    ? "bg-amber-100 text-amber-800 border-amber-300 shadow-amber-100"
+                    : "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-emerald-100"
+                } shadow-lg hover:shadow-xl`}
+              >
+                <div className="relative">
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      loading ? "bg-amber-500" : "bg-emerald-500"
+                    }`}
+                  ></div>
+                  {!loading && (
+                    <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-400 animate-ping opacity-30"></div>
+                  )}
+                </div>
+                {loading ? "Syncing data..." : "Connected & Live"}
+              </Badge>
+
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={refreshMembers}
+                disabled={loading}
+                className="border-neutral-300 hover:bg-neutral-50 text-neutral-700 font-semibold px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <span className="mr-2">🔄</span>
+                Refresh Data
+              </Button>
+
+              <div className="text-xs text-neutral-500 bg-neutral-100/60 px-4 py-2 rounded-lg">
+                <span className="font-medium">{members.length}</span> team
+                member{members.length !== 1 ? "s" : ""} online
+              </div>
+            </div>{" "}
+            {/* Error display */}
+            {error && (
+              <Alert className="mt-4 max-w-md mx-auto">
+                <AlertDescription className="text-sm">{error}</AlertDescription>
+              </Alert>
+            )}
+          </CardHeader>
+        </Card>
 
         {/* Team Members Display - Main Feature */}
-        <div className="grid gap-6 md:gap-4 mb-8">
-          {members.map((member) => {
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {members.map((member, index) => {
             // Calculate the current local time for this user's timezone using Luxon
             const localTime = mounted
               ? currentTime.setZone(member.timezone)
@@ -166,336 +302,603 @@ const TimezoneBoard: React.FC = () => {
               : false;
 
             return (
-              <div
-                key={member.id} // React key for efficient rendering
-                className={`p-6 border-2 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md ${
+              <Card
+                key={member.id}
+                className={`group relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border-2 transform hover:scale-105 ${
                   isWorkingHours
-                    ? "bg-green-50 border-green-200"
-                    : "bg-gray-50 border-gray-200"
+                    ? "bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 border-emerald-200 shadow-emerald-100 hover:shadow-emerald-200"
+                    : "bg-gradient-to-br from-white via-neutral-50 to-slate-50 border-neutral-200 shadow-neutral-100 hover:shadow-neutral-200"
                 }`}
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animation: mounted
+                    ? `fadeInUp 0.6s ease-out forwards`
+                    : "none",
+                }}
               >
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                  {/* User information display */}
-                  <div className="flex-1">
-                    {/* User's name and location */}
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{member.flag}</span>
-                      <div>
-                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">
-                          {member.name}
-                        </h2>
-                        <p className="text-gray-600">{member.location}</p>
-                      </div>
-                    </div>
+                {/* Animated background glow */}
+                <div
+                  className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+                    isWorkingHours
+                      ? "bg-gradient-to-r from-emerald-400/10 via-green-400/10 to-teal-400/10"
+                      : "bg-gradient-to-r from-neutral-400/5 via-slate-400/5 to-zinc-400/5"
+                  }`}
+                ></div>
 
-                    {/* Time information */}
-                    <div className="space-y-1">
-                      {/* Current local time with larger, prominent display */}
-                      <p className="text-2xl md:text-3xl font-mono font-bold text-blue-600">
-                        {mounted && localTime
-                          ? localTime.toFormat("h:mm:ss a")
-                          : "--:--:-- --"}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {mounted && localTime
-                          ? localTime.toFormat("cccc, MMMM dd")
-                          : "Loading..."}
-                      </p>
+                {/* Animated corner accent */}
+                <div
+                  className={`absolute top-0 right-0 w-16 h-16 transform rotate-45 translate-x-8 -translate-y-8 transition-all duration-500 group-hover:scale-150 ${
+                    isWorkingHours ? "bg-emerald-300/20" : "bg-neutral-300/20"
+                  }`}
+                ></div>
 
-                      {/* Timezone information */}
-                      <p className="text-xs text-gray-500">
-                        {mounted && localTime
-                          ? localTime.offsetNameShort
-                          : "--"}{" "}
-                        • {member.timezone}
-                      </p>
-
-                      {/* Working hours indicator */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            isWorkingHours ? "bg-green-500" : "bg-gray-400"
+                <CardHeader className="pb-4 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex-shrink-0">
+                      <Avatar
+                        className={`h-14 w-14 border-3 shadow-xl transition-all duration-500 group-hover:scale-110 ${
+                          isWorkingHours
+                            ? "border-emerald-300"
+                            : "border-neutral-300"
+                        }`}
+                      >
+                        <AvatarFallback
+                          className={`text-2xl font-bold bg-gradient-to-br flex items-center justify-center ${
+                            isWorkingHours
+                              ? "from-emerald-100 to-green-200 text-emerald-800"
+                              : "from-neutral-100 to-neutral-200 text-neutral-700"
                           }`}
-                        ></div>
-                        <span
-                          className={`text-xs font-medium ${
-                            isWorkingHours ? "text-green-700" : "text-gray-500"
-                          }`}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            lineHeight: "1",
+                            textAlign: "center" as const,
+                          }}
                         >
-                          {mounted
-                            ? isWorkingHours
-                              ? "Working Hours (9 AM - 5 PM)"
-                              : "Outside Working Hours"
-                            : "Loading..."}
+                          <span className="w-full pb-1.5 h-full flex items-center justify-center leading-none">
+                            {member.flag}
+                          </span>
+                        </AvatarFallback>
+                      </Avatar>
+                      {/* Enhanced Status pulse indicator */}
+                      <div
+                        className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-lg ${
+                          isWorkingHours ? "bg-emerald-500" : "bg-neutral-400"
+                        } ${isWorkingHours ? "animate-pulse" : ""}`}
+                      ></div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg leading-tight text-neutral-800 font-bold group-hover:text-neutral-900 transition-colors">
+                        {member.name}
+                      </CardTitle>
+                      <p className="text-sm text-neutral-600 truncate font-medium group-hover:text-neutral-700 transition-colors">
+                        {member.location}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-0 relative z-10">
+                  {/* Time Display with enhanced styling */}
+                  <div className="space-y-4 mb-6 p-4 rounded-lg bg-white/50 backdrop-blur-sm border border-neutral-200/50">
+                    <div
+                      className={`text-3xl md:text-4xl font-mono font-bold bg-gradient-to-r ${
+                        isWorkingHours
+                          ? "from-emerald-700 to-green-600"
+                          : "from-neutral-800 to-neutral-600"
+                      } bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300`}
+                    >
+                      {mounted && localTime ? (
+                        <span className="tracking-wide">
+                          {localTime.toFormat("h:mm:ss a")}
                         </span>
-                      </div>
+                      ) : (
+                        <Skeleton className="h-10 w-40 bg-neutral-200" />
+                      )}
+                    </div>
+                    <div className="text-sm text-neutral-600 font-medium">
+                      {mounted && localTime ? (
+                        localTime.toFormat("cccc, MMMM dd")
+                      ) : (
+                        <Skeleton className="h-4 w-32 bg-neutral-200" />
+                      )}
+                    </div>
+                    <div
+                      className={`text-xs font-medium px-3 py-2 rounded-full inline-block border ${
+                        isWorkingHours
+                          ? "text-emerald-700 bg-emerald-100/80 border-emerald-200"
+                          : "text-neutral-600 bg-neutral-100/80 border-neutral-200"
+                      }`}
+                    >
+                      {mounted && localTime ? localTime.offsetNameShort : "--"}{" "}
+                      • {member.timezone}
                     </div>
                   </div>
 
-                  {/* Remove button for deleting this team member */}
-                  {members.length > 1 && (
-                    <button
-                      onClick={() => handleDelete(member.id)} // Call delete function with user ID
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded transition-colors duration-200 text-sm"
-                      disabled={loading}
+                  {/* Enhanced Working Hours Status */}
+                  <div className="flex items-center justify-between">
+                    <Badge
+                      variant={isWorkingHours ? "default" : "secondary"}
+                      className={`gap-2 text-xs font-bold px-4 py-2 rounded-full border-2 transition-all duration-300 ${
+                        isWorkingHours
+                          ? "bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 border-emerald-300 shadow-lg shadow-emerald-200/50"
+                          : "bg-gradient-to-r from-neutral-100 to-slate-100 text-neutral-700 border-neutral-300 shadow-lg shadow-neutral-200/50"
+                      }`}
                     >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
+                      <div
+                        className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                          isWorkingHours
+                            ? "bg-emerald-500 shadow-lg shadow-emerald-400/50 animate-pulse"
+                            : "bg-neutral-400 shadow-lg shadow-neutral-300/50"
+                        }`}
+                      ></div>
+                      {mounted
+                        ? isWorkingHours
+                          ? "Active Hours"
+                          : "Off Hours"
+                        : "Loading..."}
+                    </Badge>
+
+                    {/* Enhanced Remove Button */}
+                    {members.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(member.id)}
+                        disabled={loading}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 h-auto border-2 border-transparent hover:border-red-200 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                      >
+                        <span className="text-sm font-medium">Remove</span>
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
 
-        {/* Add New Team Member Form - Collapsible */}
-        <details className="mb-6">
-          <summary className="cursor-pointer text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors border-2 border-gray-200 rounded-lg p-3 hover:border-blue-300 hover:bg-blue-50">
-            ➕ Add New Team Member
-          </summary>
+        {/* Add New Team Member Form */}
+        <Card className="relative overflow-hidden shadow-2xl border-2 border-neutral-200 bg-gradient-to-br from-white via-neutral-50 to-slate-50 hover:shadow-3xl transition-all duration-500">
+          {/* Animated background pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-gradient-to-r from-neutral-600 via-transparent to-neutral-600 transform -skew-y-3"></div>
+          </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="mt-4 space-y-4 p-6 bg-white border-2 border-gray-200 rounded-lg shadow-sm"
-          >
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* Name input field */}
+          <CardHeader className="pb-6 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200 shadow-lg">
+                <span className="text-2xl">➕</span>
+              </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)} // Update name state on input change
-                  className="w-full text-gray-800 border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Maria"
-                  required // HTML5 validation
-                  disabled={loading}
-                />
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-neutral-800 to-neutral-600 bg-clip-text text-transparent">
+                  Add New Team Member
+                </CardTitle>
+                <p className="text-neutral-600 text-sm mt-1 font-medium">
+                  Expand your global team collaboration
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="relative z-10">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Enhanced Name input field */}
+                <div className="group space-y-3">
+                  <label className="text-sm font-bold text-neutral-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-neutral-400"></span>
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g., Maria Rodriguez"
+                      required
+                      disabled={loading}
+                      className="border-2 border-neutral-300 focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200 bg-white transition-all duration-300 hover:border-neutral-400 px-4 py-3 font-medium"
+                    />
+                    <div className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-neutral-200 transition-all duration-300 pointer-events-none"></div>
+                  </div>
+                </div>
+
+                {/* Enhanced Location input field */}
+                <div className="group space-y-3">
+                  <label className="text-sm font-bold text-neutral-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-neutral-400"></span>
+                    Location
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="e.g., Tokyo, Japan"
+                      required
+                      disabled={loading}
+                      className="border-2 border-neutral-300 focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200 bg-white transition-all duration-300 hover:border-neutral-400 px-4 py-3 font-medium"
+                    />
+                    <div className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-neutral-200 transition-all duration-300 pointer-events-none"></div>
+                  </div>
+                </div>
+
+                {/* Enhanced Timezone input field */}
+                <div className="group space-y-3">
+                  <label className="text-sm font-bold text-neutral-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-neutral-400"></span>
+                    Timezone
+                  </label>
+                  <div className="relative">
+                    <Select
+                      value={timezone}
+                      onValueChange={setTimezone}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="w-full border-2 border-neutral-300 focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200 bg-white transition-all duration-300 hover:border-neutral-400 px-4 py-3 font-medium h-auto">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        <SelectGroup>
+                          <SelectItem value="America/New_York">
+                            Eastern Time (ET)
+                          </SelectItem>
+                          <SelectItem value="America/Chicago">
+                            Central Time (CT)
+                          </SelectItem>
+                          <SelectItem value="America/Denver">
+                            Mountain Time (MT)
+                          </SelectItem>
+                          <SelectItem value="America/Los_Angeles">
+                            Pacific Time (PT)
+                          </SelectItem>
+                          <SelectItem value="America/Anchorage">
+                            Alaska Time (AKT)
+                          </SelectItem>
+                          <SelectItem value="Pacific/Honolulu">
+                            Hawaii Time (HST)
+                          </SelectItem>
+                          <SelectItem value="America/Toronto">
+                            Toronto, Canada
+                          </SelectItem>
+                          <SelectItem value="America/Vancouver">
+                            Vancouver, Canada
+                          </SelectItem>
+                          <SelectItem value="America/Montreal">
+                            Montreal, Canada
+                          </SelectItem>
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectItem value="America/Mexico_City">
+                            Mexico City, Mexico
+                          </SelectItem>
+                          <SelectItem value="America/Guatemala">
+                            Guatemala City, Guatemala
+                          </SelectItem>
+                          <SelectItem value="America/Bogota">
+                            Bogotá, Colombia
+                          </SelectItem>
+                          <SelectItem value="America/Lima">
+                            Lima, Peru
+                          </SelectItem>
+                          <SelectItem value="America/Santiago">
+                            Santiago, Chile
+                          </SelectItem>
+                          <SelectItem value="America/Buenos_Aires">
+                            Buenos Aires, Argentina
+                          </SelectItem>
+                          <SelectItem value="America/Sao_Paulo">
+                            São Paulo, Brazil
+                          </SelectItem>
+                          <SelectItem value="America/Caracas">
+                            Caracas, Venezuela
+                          </SelectItem>
+                          <SelectItem value="America/Panama">
+                            Panama City, Panama
+                          </SelectItem>
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectItem value="Europe/London">
+                            London, UK
+                          </SelectItem>
+                          <SelectItem value="Europe/Dublin">
+                            Dublin, Ireland
+                          </SelectItem>
+                          <SelectItem value="Europe/Paris">
+                            Paris, France
+                          </SelectItem>
+                          <SelectItem value="Europe/Berlin">
+                            Berlin, Germany
+                          </SelectItem>
+                          <SelectItem value="Europe/Rome">
+                            Rome, Italy
+                          </SelectItem>
+                          <SelectItem value="Europe/Madrid">
+                            Madrid, Spain
+                          </SelectItem>
+                          <SelectItem value="Europe/Amsterdam">
+                            Amsterdam, Netherlands
+                          </SelectItem>
+                          <SelectItem value="Europe/Brussels">
+                            Brussels, Belgium
+                          </SelectItem>
+                          <SelectItem value="Europe/Zurich">
+                            Zurich, Switzerland
+                          </SelectItem>
+                          <SelectItem value="Europe/Vienna">
+                            Vienna, Austria
+                          </SelectItem>
+                          <SelectItem value="Europe/Prague">
+                            Prague, Czech Republic
+                          </SelectItem>
+                          <SelectItem value="Europe/Warsaw">
+                            Warsaw, Poland
+                          </SelectItem>
+                          <SelectItem value="Europe/Budapest">
+                            Budapest, Hungary
+                          </SelectItem>
+                          <SelectItem value="Europe/Bucharest">
+                            Bucharest, Romania
+                          </SelectItem>
+                          <SelectItem value="Europe/Athens">
+                            Athens, Greece
+                          </SelectItem>
+                          <SelectItem value="Europe/Stockholm">
+                            Stockholm, Sweden
+                          </SelectItem>
+                          <SelectItem value="Europe/Oslo">
+                            Oslo, Norway
+                          </SelectItem>
+                          <SelectItem value="Europe/Copenhagen">
+                            Copenhagen, Denmark
+                          </SelectItem>
+                          <SelectItem value="Europe/Helsinki">
+                            Helsinki, Finland
+                          </SelectItem>
+                          <SelectItem value="Europe/Riga">
+                            Riga, Latvia
+                          </SelectItem>
+                          <SelectItem value="Europe/Tallinn">
+                            Tallinn, Estonia
+                          </SelectItem>
+                          <SelectItem value="Europe/Vilnius">
+                            Vilnius, Lithuania
+                          </SelectItem>
+                          <SelectItem value="Europe/Kiev">
+                            Kiev, Ukraine
+                          </SelectItem>
+                          <SelectItem value="Europe/Moscow">
+                            Moscow, Russia
+                          </SelectItem>
+                          <SelectItem value="Europe/Istanbul">
+                            Istanbul, Turkey
+                          </SelectItem>
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectItem value="Africa/Cairo">
+                            Cairo, Egypt
+                          </SelectItem>
+                          <SelectItem value="Africa/Lagos">
+                            Lagos, Nigeria
+                          </SelectItem>
+                          <SelectItem value="Africa/Nairobi">
+                            Nairobi, Kenya
+                          </SelectItem>
+                          <SelectItem value="Africa/Johannesburg">
+                            Johannesburg, South Africa
+                          </SelectItem>
+                          <SelectItem value="Africa/Casablanca">
+                            Casablanca, Morocco
+                          </SelectItem>
+                          <SelectItem value="Africa/Tunis">
+                            Tunis, Tunisia
+                          </SelectItem>
+                          <SelectItem value="Africa/Algiers">
+                            Algiers, Algeria
+                          </SelectItem>
+                          <SelectItem value="Africa/Accra">
+                            Accra, Ghana
+                          </SelectItem>
+                          <SelectItem value="Africa/Addis_Ababa">
+                            Addis Ababa, Ethiopia
+                          </SelectItem>
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectItem value="Asia/Tokyo">
+                            Tokyo, Japan
+                          </SelectItem>
+                          <SelectItem value="Asia/Seoul">
+                            Seoul, South Korea
+                          </SelectItem>
+                          <SelectItem value="Asia/Shanghai">
+                            Shanghai, China
+                          </SelectItem>
+                          <SelectItem value="Asia/Beijing">
+                            Beijing, China
+                          </SelectItem>
+                          <SelectItem value="Asia/Hong_Kong">
+                            Hong Kong
+                          </SelectItem>
+                          <SelectItem value="Asia/Taipei">
+                            Taipei, Taiwan
+                          </SelectItem>
+                          <SelectItem value="Asia/Singapore">
+                            Singapore
+                          </SelectItem>
+                          <SelectItem value="Asia/Bangkok">
+                            Bangkok, Thailand
+                          </SelectItem>
+                          <SelectItem value="Asia/Ho_Chi_Minh">
+                            Ho Chi Minh City, Vietnam
+                          </SelectItem>
+                          <SelectItem value="Asia/Jakarta">
+                            Jakarta, Indonesia
+                          </SelectItem>
+                          <SelectItem value="Asia/Manila">
+                            Manila, Philippines
+                          </SelectItem>
+                          <SelectItem value="Asia/Kuala_Lumpur">
+                            Kuala Lumpur, Malaysia
+                          </SelectItem>
+                          <SelectItem value="Asia/Kolkata">
+                            Mumbai, India
+                          </SelectItem>
+                          <SelectItem value="Asia/Delhi">
+                            Delhi, India
+                          </SelectItem>
+                          <SelectItem value="Asia/Dhaka">
+                            Dhaka, Bangladesh
+                          </SelectItem>
+                          <SelectItem value="Asia/Karachi">
+                            Karachi, Pakistan
+                          </SelectItem>
+                          <SelectItem value="Asia/Kabul">
+                            Kabul, Afghanistan
+                          </SelectItem>
+                          <SelectItem value="Asia/Tehran">
+                            Tehran, Iran
+                          </SelectItem>
+                          <SelectItem value="Asia/Dubai">Dubai, UAE</SelectItem>
+                          <SelectItem value="Asia/Riyadh">
+                            Riyadh, Saudi Arabia
+                          </SelectItem>
+                          <SelectItem value="Asia/Kuwait">
+                            Kuwait City, Kuwait
+                          </SelectItem>
+                          <SelectItem value="Asia/Baghdad">
+                            Baghdad, Iraq
+                          </SelectItem>
+                          <SelectItem value="Asia/Jerusalem">
+                            Jerusalem, Israel
+                          </SelectItem>
+                          <SelectItem value="Asia/Beirut">
+                            Beirut, Lebanon
+                          </SelectItem>
+                          <SelectItem value="Asia/Damascus">
+                            Damascus, Syria
+                          </SelectItem>
+                          <SelectItem value="Asia/Amman">
+                            Amman, Jordan
+                          </SelectItem>
+                          <SelectItem value="Asia/Baku">
+                            Baku, Azerbaijan
+                          </SelectItem>
+                          <SelectItem value="Asia/Yerevan">
+                            Yerevan, Armenia
+                          </SelectItem>
+                          <SelectItem value="Asia/Tbilisi">
+                            Tbilisi, Georgia
+                          </SelectItem>
+                          <SelectItem value="Asia/Almaty">
+                            Almaty, Kazakhstan
+                          </SelectItem>
+                          <SelectItem value="Asia/Tashkent">
+                            Tashkent, Uzbekistan
+                          </SelectItem>
+                          <SelectItem value="Asia/Novosibirsk">
+                            Novosibirsk, Russia
+                          </SelectItem>
+                          <SelectItem value="Asia/Vladivostok">
+                            Vladivostok, Russia
+                          </SelectItem>
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectItem value="Australia/Sydney">
+                            Sydney, Australia
+                          </SelectItem>
+                          <SelectItem value="Australia/Melbourne">
+                            Melbourne, Australia
+                          </SelectItem>
+                          <SelectItem value="Australia/Brisbane">
+                            Brisbane, Australia
+                          </SelectItem>
+                          <SelectItem value="Australia/Perth">
+                            Perth, Australia
+                          </SelectItem>
+                          <SelectItem value="Australia/Adelaide">
+                            Adelaide, Australia
+                          </SelectItem>
+                          <SelectItem value="Australia/Darwin">
+                            Darwin, Australia
+                          </SelectItem>
+                          <SelectItem value="Pacific/Auckland">
+                            Auckland, New Zealand
+                          </SelectItem>
+                          <SelectItem value="Pacific/Wellington">
+                            Wellington, New Zealand
+                          </SelectItem>
+                          <SelectItem value="Pacific/Fiji">
+                            Suva, Fiji
+                          </SelectItem>
+                          <SelectItem value="Pacific/Guam">Guam</SelectItem>
+                        </SelectGroup>
+
+                        <SelectGroup>
+                          <SelectItem value="Atlantic/Reykjavik">
+                            Reykjavik, Iceland
+                          </SelectItem>
+                          <SelectItem value="Atlantic/Azores">
+                            Azores, Portugal
+                          </SelectItem>
+                          <SelectItem value="Atlantic/Cape_Verde">
+                            Cape Verde
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <div className="absolute inset-0 border-2 border-transparent rounded-md group-hover:border-neutral-200 transition-all duration-300 pointer-events-none"></div>
+                  </div>
+                </div>
               </div>
 
-              {/* Location input field */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)} // Update location state on input change
-                  className="w-full text-gray-800 border-2 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Tokyo, Japan"
-                  required // HTML5 validation
+              {/* Enhanced Submit button */}
+              <div className="pt-8 flex justify-center">
+                <Button
+                  type="submit"
                   disabled={loading}
-                />
-              </div>
-
-              {/* Timezone input field */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  Timezone
-                </label>
-                <select
-                  value={timezone}
-                  onChange={(e) => setTimezone(e.target.value)} // Update timezone state on input change
-                  className="w-full border-2 text-gray-800 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                  required // HTML5 validation
-                  disabled={loading}
+                  className="group relative overflow-hidden bg-gradient-to-r from-neutral-800 to-neutral-700 hover:from-neutral-700 hover:to-neutral-600 text-white font-bold px-12 py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-2 border-transparent hover:border-neutral-400"
                 >
-                  {/* North America */}
-                  <optgroup label="🇺🇸 United States & Canada">
-                    <option value="America/New_York">Eastern Time (ET)</option>
-                    <option value="America/Chicago">Central Time (CT)</option>
-                    <option value="America/Denver">Mountain Time (MT)</option>
-                    <option value="America/Los_Angeles">
-                      Pacific Time (PT)
-                    </option>
-                    <option value="America/Anchorage">Alaska Time (AKT)</option>
-                    <option value="Pacific/Honolulu">Hawaii Time (HST)</option>
-                    <option value="America/Toronto">Toronto, Canada</option>
-                    <option value="America/Vancouver">Vancouver, Canada</option>
-                    <option value="America/Montreal">Montreal, Canada</option>
-                  </optgroup>
+                  {/* Button glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
 
-                  {/* Central & South America */}
-                  <optgroup label="🌎 Central & South America">
-                    <option value="America/Mexico_City">
-                      Mexico City, Mexico
-                    </option>
-                    <option value="America/Guatemala">
-                      Guatemala City, Guatemala
-                    </option>
-                    <option value="America/Bogota">Bogotá, Colombia</option>
-                    <option value="America/Lima">Lima, Peru</option>
-                    <option value="America/Santiago">Santiago, Chile</option>
-                    <option value="America/Buenos_Aires">
-                      Buenos Aires, Argentina
-                    </option>
-                    <option value="America/Sao_Paulo">São Paulo, Brazil</option>
-                    <option value="America/Caracas">Caracas, Venezuela</option>
-                    <option value="America/Panama">Panama City, Panama</option>
-                  </optgroup>
-
-                  {/* Europe */}
-                  <optgroup label="🇪🇺 Europe">
-                    <option value="Europe/London">London, UK</option>
-                    <option value="Europe/Dublin">Dublin, Ireland</option>
-                    <option value="Europe/Paris">Paris, France</option>
-                    <option value="Europe/Berlin">Berlin, Germany</option>
-                    <option value="Europe/Rome">Rome, Italy</option>
-                    <option value="Europe/Madrid">Madrid, Spain</option>
-                    <option value="Europe/Amsterdam">
-                      Amsterdam, Netherlands
-                    </option>
-                    <option value="Europe/Brussels">Brussels, Belgium</option>
-                    <option value="Europe/Zurich">Zurich, Switzerland</option>
-                    <option value="Europe/Vienna">Vienna, Austria</option>
-                    <option value="Europe/Prague">
-                      Prague, Czech Republic
-                    </option>
-                    <option value="Europe/Warsaw">Warsaw, Poland</option>
-                    <option value="Europe/Budapest">Budapest, Hungary</option>
-                    <option value="Europe/Bucharest">Bucharest, Romania</option>
-                    <option value="Europe/Athens">Athens, Greece</option>
-                    <option value="Europe/Stockholm">Stockholm, Sweden</option>
-                    <option value="Europe/Oslo">Oslo, Norway</option>
-                    <option value="Europe/Copenhagen">
-                      Copenhagen, Denmark
-                    </option>
-                    <option value="Europe/Helsinki">Helsinki, Finland</option>
-                    <option value="Europe/Riga">Riga, Latvia</option>
-                    <option value="Europe/Tallinn">Tallinn, Estonia</option>
-                    <option value="Europe/Vilnius">Vilnius, Lithuania</option>
-                    <option value="Europe/Kiev">Kiev, Ukraine</option>
-                    <option value="Europe/Moscow">Moscow, Russia</option>
-                    <option value="Europe/Istanbul">Istanbul, Turkey</option>
-                  </optgroup>
-
-                  {/* Africa */}
-                  <optgroup label="🌍 Africa">
-                    <option value="Africa/Cairo">Cairo, Egypt</option>
-                    <option value="Africa/Lagos">Lagos, Nigeria</option>
-                    <option value="Africa/Nairobi">Nairobi, Kenya</option>
-                    <option value="Africa/Johannesburg">
-                      Johannesburg, South Africa
-                    </option>
-                    <option value="Africa/Casablanca">
-                      Casablanca, Morocco
-                    </option>
-                    <option value="Africa/Tunis">Tunis, Tunisia</option>
-                    <option value="Africa/Algiers">Algiers, Algeria</option>
-                    <option value="Africa/Accra">Accra, Ghana</option>
-                    <option value="Africa/Addis_Ababa">
-                      Addis Ababa, Ethiopia
-                    </option>
-                  </optgroup>
-
-                  {/* Asia */}
-                  <optgroup label="🌏 Asia">
-                    <option value="Asia/Tokyo">Tokyo, Japan</option>
-                    <option value="Asia/Seoul">Seoul, South Korea</option>
-                    <option value="Asia/Shanghai">Shanghai, China</option>
-                    <option value="Asia/Beijing">Beijing, China</option>
-                    <option value="Asia/Hong_Kong">Hong Kong</option>
-                    <option value="Asia/Taipei">Taipei, Taiwan</option>
-                    <option value="Asia/Singapore">Singapore</option>
-                    <option value="Asia/Bangkok">Bangkok, Thailand</option>
-                    <option value="Asia/Ho_Chi_Minh">
-                      Ho Chi Minh City, Vietnam
-                    </option>
-                    <option value="Asia/Jakarta">Jakarta, Indonesia</option>
-                    <option value="Asia/Manila">Manila, Philippines</option>
-                    <option value="Asia/Kuala_Lumpur">
-                      Kuala Lumpur, Malaysia
-                    </option>
-                    <option value="Asia/Kolkata">Mumbai, India</option>
-                    <option value="Asia/Delhi">Delhi, India</option>
-                    <option value="Asia/Dhaka">Dhaka, Bangladesh</option>
-                    <option value="Asia/Karachi">Karachi, Pakistan</option>
-                    <option value="Asia/Kabul">Kabul, Afghanistan</option>
-                    <option value="Asia/Tehran">Tehran, Iran</option>
-                    <option value="Asia/Dubai">Dubai, UAE</option>
-                    <option value="Asia/Riyadh">Riyadh, Saudi Arabia</option>
-                    <option value="Asia/Kuwait">Kuwait City, Kuwait</option>
-                    <option value="Asia/Baghdad">Baghdad, Iraq</option>
-                    <option value="Asia/Jerusalem">Jerusalem, Israel</option>
-                    <option value="Asia/Beirut">Beirut, Lebanon</option>
-                    <option value="Asia/Damascus">Damascus, Syria</option>
-                    <option value="Asia/Amman">Amman, Jordan</option>
-                    <option value="Asia/Baku">Baku, Azerbaijan</option>
-                    <option value="Asia/Yerevan">Yerevan, Armenia</option>
-                    <option value="Asia/Tbilisi">Tbilisi, Georgia</option>
-                    <option value="Asia/Almaty">Almaty, Kazakhstan</option>
-                    <option value="Asia/Tashkent">Tashkent, Uzbekistan</option>
-                    <option value="Asia/Novosibirsk">
-                      Novosibirsk, Russia
-                    </option>
-                    <option value="Asia/Vladivostok">
-                      Vladivostok, Russia
-                    </option>
-                  </optgroup>
-
-                  {/* Australia & Oceania */}
-                  <optgroup label="🇦🇺 Australia & Oceania">
-                    <option value="Australia/Sydney">Sydney, Australia</option>
-                    <option value="Australia/Melbourne">
-                      Melbourne, Australia
-                    </option>
-                    <option value="Australia/Brisbane">
-                      Brisbane, Australia
-                    </option>
-                    <option value="Australia/Perth">Perth, Australia</option>
-                    <option value="Australia/Adelaide">
-                      Adelaide, Australia
-                    </option>
-                    <option value="Australia/Darwin">Darwin, Australia</option>
-                    <option value="Pacific/Auckland">
-                      Auckland, New Zealand
-                    </option>
-                    <option value="Pacific/Wellington">
-                      Wellington, New Zealand
-                    </option>
-                    <option value="Pacific/Fiji">Suva, Fiji</option>
-                    <option value="Pacific/Honolulu">Honolulu, Hawaii</option>
-                    <option value="Pacific/Guam">Guam</option>
-                  </optgroup>
-
-                  {/* Atlantic */}
-                  <optgroup label="🌊 Atlantic">
-                    <option value="Atlantic/Reykjavik">
-                      Reykjavik, Iceland
-                    </option>
-                    <option value="Atlantic/Azores">Azores, Portugal</option>
-                    <option value="Atlantic/Cape_Verde">Cape Verde</option>
-                  </optgroup>
-                </select>
+                  <span className="relative z-10 flex items-center gap-3 text-lg">
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-xl">✅</span>
+                        Add Team Member
+                      </>
+                    )}
+                  </span>
+                </Button>
               </div>
-            </div>
-
-            {/* Submit button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
-                disabled={loading}
-              >
-                {loading ? "⏳ Adding..." : "✅ Add Team Member"}
-              </button>
-            </div>
-          </form>
-        </details>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* Footer */}
-        <div className="text-center pt-6 border-t border-gray-200">
-          <p className="text-gray-500 text-sm">
-            Built with ❤️ by Jorge Pimentel • Updated in real-time • Shared
-            across all users
-          </p>
-          <p className="text-gray-400 text-xs mt-1">
-            Powered by Vercel Postgres Database
-          </p>
-        </div>
+        <Card className="mt-8 border-0 bg-gradient-to-r from-neutral-100 to-neutral-200 shadow-lg">
+          <CardContent className="text-center py-6">
+            <p className="text-neutral-600 text-sm font-medium">
+              Built with ❤️ by Jorge Pimentel • Updated in real-time • Shared
+              across all users
+            </p>
+            <p className="text-neutral-500 text-xs mt-2">
+              Powered by Vercel Blob Storage
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
