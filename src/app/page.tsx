@@ -221,7 +221,7 @@ const TimezoneBoard: React.FC = () => {
                   />
                 </div>
                 <CardTitle className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-600 bg-clip-text text-transparent tracking-tight">
-                  Triton Team
+                  Triton&apos;s Team
                 </CardTitle>
               </div>
               <CardTitle className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
@@ -891,8 +891,8 @@ const TimezoneBoard: React.FC = () => {
         <Card className="mt-8 border-0 bg-gradient-to-r from-neutral-100 to-neutral-200 shadow-lg">
           <CardContent className="text-center py-6">
             <p className="text-neutral-600 text-sm font-medium">
-              Built with ❤️ by Jorge Pimentel • Updated in real-time • Shared
-              across all users
+              Built with ❤️ by Jorge Pimentel and Phillip • Updated in real-time
+              • Shared across all users
             </p>
             <p className="text-neutral-500 text-xs mt-2">
               Powered by Vercel Blob Storage
