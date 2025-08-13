@@ -32,6 +32,23 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# Database credentials and sensitive files
+database_setup.sql
+setup-database.js
+setup-table.sql
+scripts/reset-team-data.js
+*.sql
+
+# Security and secrets
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ecdsa*
+id_ed25519*
 
 # vercel
 .vercel
