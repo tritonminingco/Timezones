@@ -1,229 +1,145 @@
-/**
- * API Routes for Team Members
- * 
- * Handles CRUD operations for team members in the timezone board
- * Uses Vercel Blob for shared data storage (following official docs pattern)
- */
-
-import { del, list, put } from '@vercel/blob';
+import { authOptions } from '@/lib/auth';
+import { neon } from '@neondatabase/serverless';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
-// TypeScript interface for team member
-interface TeamMember {
-  id: number;
-  name: string;
-  location: string;
-  timezone: string;
-  flag: string;
-  created_at?: string;
-}
+const sql = neon(process.env.DATABASE_URL!);
 
-// Initial team members data
-const INITIAL_TEAM: TeamMember[] = [
-  {
-    id: 1,
-    name: "Jorge Pimentel",
-    location: "Florida, USA",
-    timezone: "America/New_York",
-    flag: "🇺🇸",
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    name: "Phillip",
-    location: "Hanoi, Vietnam",
-    timezone: "Asia/Ho_Chi_Minh",
-    flag: "🇻🇳",
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 3,
-    name: "Kevin",
-    location: "Riga, Latvia",
-    timezone: "Europe/Riga",
-    flag: "🇱🇻",
-    created_at: new Date().toISOString()
-  }
-];
-
-const TEAM_DATA_FILENAME = 'team-members.json';
-
-// Helper function to get all team members from blob storage
-async function getTeamMembers(): Promise<TeamMember[]> {
-  try {
-    console.log('Getting team members from blob...');
-    const { blobs } = await list({ prefix: TEAM_DATA_FILENAME });
-    console.log('Found blobs:', blobs.length);
-
-    if (blobs.length === 0) {
-      console.log('No existing data, initializing with default team');
-      await saveTeamMembers(INITIAL_TEAM);
-      return INITIAL_TEAM;
-    }
-
-    // Get the most recent blob (in case of multiple versions)
-    const latestBlob = blobs[0];
-    console.log('Fetching data from blob URL:', latestBlob.url);
-
-    const response = await fetch(latestBlob.url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch blob: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Successfully retrieved team members:', data.length);
-    return data;
-  } catch (error) {
-    console.error('Error getting team members:', error);
-    console.log('Falling back to initial team');
-    return INITIAL_TEAM;
-  }
-}
-
-// Helper function to save team members to blob storage
-async function saveTeamMembers(members: TeamMember[]): Promise<void> {
-  try {
-    console.log('Saving team members to blob:', members.length, 'members');
-    console.log('BLOB_READ_WRITE_TOKEN exists:', !!process.env.BLOB_READ_WRITE_TOKEN);
-
-    // Convert to JSON string
-    const jsonData = JSON.stringify(members, null, 2);
-    console.log('JSON data size:', jsonData.length, 'characters');
-
-    // Delete existing file first (to avoid multiple versions)
-    try {
-      const { blobs } = await list({ prefix: TEAM_DATA_FILENAME });
-      for (const blob of blobs) {
-        await del(blob.url);
-      }
-    } catch (delError) {
-      console.log('No existing file to delete or delete failed:', delError);
-    }
-
-    // Upload new data following Vercel docs pattern
-    const blob = await put(TEAM_DATA_FILENAME, jsonData, {
-      access: 'public',
-      contentType: 'application/json',
-    });
-
-    console.log('Successfully saved team members to blob:', blob.url);
-  } catch (error) {
-    console.error('Error saving team members to blob:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Detailed error:', errorMessage);
-    throw new Error(`Failed to save to blob: ${errorMessage}`);
-  }
-}
-
-// GET: Fetch all team members
 export async function GET() {
   try {
-    console.log('GET /api/team-members called');
-    const members = await getTeamMembers();
-    console.log('Returning members:', members.length);
+    console.log('🔐 Checking session for team-members API...');
+    const session = await getServerSession(authOptions);
+    console.log('Session:', session ? 'Found' : 'Not found');
+    console.log('User email:', session?.user?.email);
 
+    if (!session) {
+      console.log('❌ No session found, returning 401');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    console.log('✅ Session valid, fetching team members...');
+    const teamMembers = await sql`
+      SELECT tm.*, u.name as creator_name, u.email as created_by_email
+      FROM team_members tm
+      LEFT JOIN users u ON tm.created_by = u.id
+      ORDER BY tm.created_at DESC
+    `;
+
+    console.log('📊 Found team members:', teamMembers.length);
     return NextResponse.json({
       success: true,
-      data: members
+      data: teamMembers
     });
   } catch (error) {
-    console.error('GET Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error fetching team members:', error);
     return NextResponse.json(
-      { success: false, error: `Failed to fetch team members: ${errorMessage}` },
+      { error: 'Failed to fetch team members' },
       { status: 500 }
     );
   }
 }
 
-// POST: Add new team member
 export async function POST(request: NextRequest) {
   try {
-    console.log('POST /api/team-members called');
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
-    console.log('Request body received:', body);
+    const { name, location, timezone, flag } = body;
 
-    const { name, location, timezone, flag = "🌍" } = body;
-
-    // Validation
     if (!name || !location || !timezone) {
-      console.log('Validation failed - missing fields:', { name: !!name, location: !!location, timezone: !!timezone });
       return NextResponse.json(
-        { success: false, error: 'Name, location, and timezone are required' },
+        { error: 'Name, location, and timezone are required' },
         { status: 400 }
       );
     }
 
-    console.log('Validation passed, getting current members...');
-    const currentMembers = await getTeamMembers();
-    console.log('Current members retrieved:', currentMembers.length);
+    // Check if user is admin
+    const [currentUser] = await sql`
+      SELECT role FROM users WHERE id = ${session.user.id}
+    `;
 
-    // Create new team member
-    const newMember: TeamMember = {
-      id: Date.now(),
-      name,
-      location,
-      timezone,
-      flag,
-      created_at: new Date().toISOString()
-    };
-    console.log('New member created:', newMember);
+    const isAdmin = currentUser?.[0]?.role === 'admin';
 
-    // Add to members array
-    const updatedMembers = [...currentMembers, newMember];
-    console.log('Updated members array length:', updatedMembers.length);
+    // If not admin, check if they already have a team member
+    if (!isAdmin) {
+      const [existingMember] = await sql`
+        SELECT id FROM team_members WHERE created_by = ${session.user.id}
+      `;
 
-    // Save back to blob storage
-    console.log('Attempting to save to blob...');
-    await saveTeamMembers(updatedMembers);
-    console.log('Successfully saved to blob');
+      if (existingMember) {
+        return NextResponse.json(
+          { error: 'You can only create one team member. Please delete your existing member first.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const [newMember] = await sql`
+      INSERT INTO team_members (name, location, timezone, flag, created_by, status)
+      VALUES (${name}, ${location}, ${timezone}, ${flag || '🌍'}, ${session.user.id}, 'active')
+      RETURNING id, name, location, timezone, flag, status, created_at, created_by
+    `;
 
     return NextResponse.json({
       success: true,
       data: newMember
     });
   } catch (error) {
-    console.error('POST Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
-    console.error('Error details:', { message: errorMessage, stack: errorStack });
-
+    console.error('Error creating team member:', error);
     return NextResponse.json(
-      { success: false, error: `Failed to add team member: ${errorMessage}` },
+      { error: 'Failed to create team member' },
       { status: 500 }
     );
   }
 }
 
-// DELETE: Remove team member
 export async function DELETE(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Member ID is required' },
+        { error: 'Member ID is required' },
         { status: 400 }
       );
     }
 
-    // Get current members
-    const currentMembers = await getTeamMembers();
-    const memberId = parseInt(id);
+    // Check if user is admin or creator of the team member
+    const [teamMember] = await sql`
+      SELECT created_by FROM team_members WHERE id = ${id}
+    `;
 
-    // Filter out the member with matching ID
-    const updatedMembers = currentMembers.filter(member => member.id !== memberId);
+    const [currentUser] = await sql`
+      SELECT role FROM users WHERE id = ${session.user.id}
+    `;
 
-    if (updatedMembers.length === currentMembers.length) {
+    if (!teamMember) {
       return NextResponse.json(
-        { success: false, error: 'Team member not found' },
+        { error: 'Team member not found' },
         { status: 404 }
       );
     }
 
-    // Save updated members back to blob storage
-    await saveTeamMembers(updatedMembers);
+    const isAdmin = currentUser?.[0]?.role === 'admin';
+    const isCreator = teamMember.created_by === parseInt(session.user.id);
+
+    if (!isAdmin && !isCreator) {
+      return NextResponse.json(
+        { error: 'You can only delete team members you created, or you must be an admin' },
+        { status: 403 }
+      );
+    }
+
+    await sql`DELETE FROM team_members WHERE id = ${id}`;
 
     return NextResponse.json({
       success: true,
@@ -232,7 +148,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Error deleting team member:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete team member' },
+      { error: 'Failed to delete team member' },
       { status: 500 }
     );
   }

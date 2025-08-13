@@ -1,128 +1,76 @@
 /**
- * Custom React Hook for Team Members API
+ * Team Members Hook - Backward Compatible
  * 
- * Provides functions to interact with the Vercel Postgres database
- * Handles loading states, error handling, and data synchronization
+ * Provides the same interface as before but using React Query underneath
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCreateTeamMember,
+  useDeleteTeamMember,
+  useTeamMembers as useTeamMembersQuery,
+} from '@/lib/query/hooks/useTeamMembers';
+import type { CreateTeamMemberRequest, TeamMember } from '@/lib/types';
 
-// TypeScript interface for team member
-interface TeamMember {
-  id: number;
-  name: string;
-  location: string;
-  timezone: string;
-  flag: string;
-  created_at?: string;
-}
-
-interface UseTeamMembersReturn {
+export interface UseTeamMembersReturn {
   members: TeamMember[];
   loading: boolean;
   error: string | null;
-  addMember: (member: Omit<TeamMember, 'id' | 'created_at'>) => Promise<boolean>;
+  addMember: (member: CreateTeamMemberRequest) => Promise<boolean>;
   removeMember: (id: number) => Promise<boolean>;
   refreshMembers: () => Promise<void>;
 }
 
+/**
+ * Hook that maintains the old interface for backward compatibility
+ */
 export function useTeamMembers(): UseTeamMembersReturn {
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: members = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useTeamMembersQuery();
 
-  // Fetch all team members from database
-  const fetchMembers = useCallback(async () => {
+  const createMutation = useCreateTeamMember();
+  const deleteMutation = useDeleteTeamMember();
+
+  const addMember = async (member: CreateTeamMemberRequest): Promise<boolean> => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/team-members');
-      const result = await response.json();
-
-      if (result.success) {
-        setMembers(result.data);
-      } else {
-        setError(result.error || 'Failed to fetch team members');
-      }
-    } catch (err) {
-      setError('Network error: Unable to fetch team members');
-      console.error('Fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Add a new team member to database
-  const addMember = useCallback(async (memberData: Omit<TeamMember, 'id' | 'created_at'>): Promise<boolean> => {
-    try {
-      setError(null);
-
-      const response = await fetch('/api/team-members', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(memberData),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Add the new member to local state
-        setMembers(prev => [...prev, result.data]);
-        return true;
-      } else {
-        setError(result.error || 'Failed to add team member');
-        return false;
-      }
-    } catch (err) {
-      setError('Network error: Unable to add team member');
-      console.error('Add member error:', err);
+      await createMutation.mutateAsync(member);
+      return true;
+    } catch (error) {
+      console.error('Failed to add member:', error);
       return false;
     }
-  }, []);
+  };
 
-  // Remove a team member from database
-  const removeMember = useCallback(async (id: number): Promise<boolean> => {
+  const removeMember = async (id: number): Promise<boolean> => {
     try {
-      setError(null);
-
-      const response = await fetch(`/api/team-members?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Remove the member from local state
-        setMembers(prev => prev.filter(member => member.id !== id));
-        return true;
-      } else {
-        setError(result.error || 'Failed to remove team member');
-        return false;
-      }
-    } catch (err) {
-      setError('Network error: Unable to remove team member');
-      console.error('Remove member error:', err);
+      await deleteMutation.mutateAsync(id);
+      return true;
+    } catch (error) {
+      console.error('Failed to remove member:', error);
       return false;
     }
-  }, []);
+  };
 
-  // Refresh members (public method for manual refresh)
-  const refreshMembers = useCallback(async () => {
-    await fetchMembers();
-  }, [fetchMembers]);
+  const refreshMembers = async (): Promise<void> => {
+    await refetch();
+  };
 
-  // Fetch members on component mount
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+  // Combine loading states from query and mutations
+  const isLoading = loading || createMutation.isPending || deleteMutation.isPending;
+
+  // Combine errors from query and mutations
+  const combinedError = error?.message ||
+    createMutation.error?.message ||
+    deleteMutation.error?.message ||
+    null;
 
   return {
     members,
-    loading,
-    error,
+    loading: isLoading,
+    error: combinedError,
     addMember,
     removeMember,
     refreshMembers,
