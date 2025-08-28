@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Free SVG world map from Wikimedia Commons: https://commons.wikimedia.org/wiki/File:BlankMap-World.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1001" viewBox="0 0 2000 1001">
+  <rect width="2000" height="1001" fill="#e6f2ff"/>
+  <g fill="#b3b3b3" stroke="#888" stroke-width="1">
+    <path d="M 100 500 L 200 400 L 300 450 L 400 420 L 500 500 L 600 480 L 700 520 L 800 500 L 900 540 L 1000 500 L 1100 480 L 1200 520 L 1300 500 L 1400 540 L 1500 500 L 1600 480 L 1700 520 L 1800 500 L 1900 540 L 2000 500 L 2000 1001 L 0 1001 Z"/>
+    <!-- This is a placeholder for continents. Replace with a detailed SVG for production. -->
+  </g>
+</svg>

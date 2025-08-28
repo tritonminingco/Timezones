@@ -3,7 +3,13 @@ import { NextAuthOptions } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 
-const sql = neon(process.env.DATABASE_URL!);
+const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error(
+    'No database connection string was provided. Please set NEON_DATABASE_URL or DATABASE_URL in your environment.'
+  );
+}
+const sql = neon(connectionString);
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
