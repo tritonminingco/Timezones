@@ -27,68 +27,63 @@ export function TimezoneHeader({
   onRefresh,
 }: TimezoneHeaderProps) {
   return (
-    <Card className="border-0 shadow-2xl bg-gradient-to-br from-white via-neutral-50 to-neutral-100 backdrop-blur-sm relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]"></div>
-      <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full -translate-x-16 -translate-y-16"></div>
-      <div className="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-blue-500/10 rounded-full translate-x-12 translate-y-12"></div>
+    <Card className="border bg-slate-900 text-white shadow-sm relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] mix-blend-overlay"></div>
 
-      <CardHeader className="text-center pb-8 px-8 pt-12 relative">
-        <div className="space-y-6">
+      <CardHeader className="text-center pb-6 px-6 pt-8 relative">
+        <div className="space-y-3">
           <div className="flex items-center justify-center gap-4">
-            {/* Triton Logo */}
             <div className="relative">
               <Image
                 src="/triton-logo.png"
                 alt="Triton Logo"
-                width={80}
-                height={80}
-                className="drop-shadow-lg hover:scale-110 transition-transform duration-300"
+                width={64}
+                height={64}
+                className="transition-transform duration-200"
                 priority
                 unoptimized
               />
             </div>
-            <CardTitle className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-neutral-800 via-neutral-700 to-neutral-600 bg-clip-text text-transparent tracking-tight">
-              Triton&apos;s Team
-            </CardTitle>
+            <div className="text-left">
+              <CardTitle className="text-2xl md:text-3xl font-semibold text-white tracking-tight">
+                Triton&apos;s Global Ops Clock
+              </CardTitle>
+              <div className="text-sm text-slate-300 mt-0.5">Live team clockboard — stay in sync across timezones</div>
+            </div>
           </div>
-          <CardTitle className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-emerald-600 bg-clip-text text-transparent">
-            Timezone Dashboard
-          </CardTitle>
+
+          <div className="mt-3 inline-flex items-center gap-3 text-sm text-slate-200 bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700 shadow-sm">
+            <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse" />
+            <div className="font-medium text-white">Live</div>
+            <div className="text-slate-300">•</div>
+            <div>
+              {mounted && currentTime ? (
+                <>
+                  <span className="font-semibold text-white">{currentTime.toFormat("h:mm:ss a")}</span>
+                  <span className="ml-2 text-xs text-slate-300">({currentTime.offsetNameShort})</span>
+                </>
+              ) : (
+                <span className="text-slate-300">Loading…</span>
+              )}
+            </div>
+            <div className="text-slate-300">•</div>
+            <div className="text-xs text-slate-300">UTC {mounted && currentTime ? currentTime.toUTC().toFormat('h:mm a') : '--:--'}</div>
+          </div>
         </div>
-        <p className="text-neutral-600 text-xl md:text-2xl font-medium mt-6 leading-relaxed">
-          Real-time collaboration across continents
-        </p>
-        <div className="mt-8 inline-flex items-center gap-2 text-sm text-neutral-500 bg-white/60 backdrop-blur-sm px-6 py-3 rounded-full border border-neutral-200/60 shadow-lg">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="font-medium">Live updates every second</span>
-          <span className="text-neutral-400">•</span>
-          <span>
-            {mounted && currentTime
-              ? currentTime.toFormat("MMMM dd, yyyy 'at' h:mm:ss a")
-              : "Loading..."}{" "}
-            UTC
-          </span>
-        </div>
-        {/* Database status indicator */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+
+        {/* Controls / status */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 px-6 pb-6">
           <Badge
             variant={loading ? "secondary" : "default"}
-            className={`gap-3 px-6 py-3 font-semibold text-sm transition-all duration-300 ${
+            className={`gap-2 px-4 py-2 text-sm font-medium transition-all duration-200 ${
               loading
-                ? "bg-amber-100 text-amber-800 border-amber-300 shadow-amber-100"
-                : "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-emerald-100"
-            } shadow-lg hover:shadow-xl`}
+                ? "bg-amber-50 text-amber-700 border-amber-100"
+                : "bg-emerald-900/40 text-emerald-300 border-emerald-800"
+            } shadow-sm`}
           >
             <div className="relative">
-              <div
-                className={`w-3 h-3 rounded-full ${
-                  loading ? "bg-amber-500" : "bg-emerald-500"
-                }`}
-              ></div>
-              {!loading && (
-                <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-400 animate-ping opacity-30"></div>
-              )}
+              <div className={`w-2.5 h-2.5 rounded-full ${loading ? "bg-amber-500" : "bg-emerald-400"}`}></div>
+              {!loading && <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping opacity-20"></div>}
             </div>
             {loading ? "Syncing data..." : "Connected & Live"}
           </Badge>
@@ -96,59 +91,42 @@ export function TimezoneHeader({
           {onRefresh && (
             <Button
               variant="outline"
-              size="lg"
+              size="sm"
               onClick={onRefresh}
               disabled={loading}
-              className="border-neutral-300 hover:bg-neutral-50 text-neutral-700 font-semibold px-6 py-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              className="border-slate-200 hover:bg-slate-50 text-slate-700 font-medium px-4 py-2 shadow-sm transition-all duration-150"
             >
-              <span className="mr-2">🔄</span>
-              Refresh Data
+              Refresh
             </Button>
           )}
 
-          <div className="text-xs text-neutral-500 bg-neutral-100/60 px-4 py-2 rounded-lg">
-            <span className="font-medium">{memberCount}</span> team member
-            {memberCount !== 1 ? "s" : ""} online
+          <div className="text-xs text-slate-300 bg-slate-800/40 px-3 py-1 rounded-md">
+            <span className="font-medium text-white">{memberCount}</span> member{memberCount !== 1 ? "s" : ""}
+            &nbsp;•&nbsp;{Math.max(1, Math.round(memberCount * 0.8))} active
           </div>
         </div>
+
         {/* User Profile Section */}
-        <div className="mt-6 flex items-center justify-center gap-4 p-4 bg-white/40 backdrop-blur-sm rounded-xl border border-neutral-200/60">
-          <Avatar className="h-10 w-10">
-            {session?.user?.image ? (
-              <Image
-                src={session.user.image}
-                alt={session.user.name || "User"}
-                width={40}
-                height={40}
-                className="rounded-full"
-              />
-            ) : (
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold">
-                {session?.user?.name?.[0] || session?.user?.email?.[0] || "U"}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          <div className="text-sm">
-            <p className="font-semibold text-neutral-700">
-              Welcome, {session?.user?.name || session?.user?.email}
-              {session?.user?.role === "admin" && (
-                <Badge className="ml-2 bg-gradient-to-r from-red-500 to-red-600 text-white">
-                  ADMIN
-                </Badge>
+        <div className="px-6 pb-8">
+          <div className="mt-2 flex items-center justify-center gap-4 p-3 bg-slate-800/40 rounded-lg border border-slate-700">
+            <Avatar className="h-9 w-9">
+              {session?.user?.image ? (
+                <Image src={session.user.image} alt={session.user.name || "User"} width={36} height={36} className="rounded-full" />
+              ) : (
+                <AvatarFallback className="bg-indigo-600 text-white font-semibold">{session?.user?.name?.[0] || session?.user?.email?.[0] || "U"}</AvatarFallback>
               )}
-            </p>
-            <p className="text-neutral-500 text-xs">
-              Signed in with {session?.user?.provider || "OAuth"}
-            </p>
+            </Avatar>
+            <div className="text-sm">
+              <p className="font-medium text-white">
+                Welcome, {session?.user?.name || session?.user?.email}
+                {session?.user?.role === "admin" && (
+                  <Badge className="ml-2 bg-red-600 text-white">ADMIN</Badge>
+                )}
+              </p>
+              <p className="text-slate-300 text-xs">Signed in with {session?.user?.provider || "OAuth"}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/auth/signin" })} className="ml-auto">Sign Out</Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-            className="ml-auto"
-          >
-            Sign Out
-          </Button>
         </div>
       </CardHeader>
     </Card>

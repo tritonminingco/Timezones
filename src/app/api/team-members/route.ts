@@ -3,7 +3,13 @@ import { neon } from '@neondatabase/serverless';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
-const sql = neon(process.env.DATABASE_URL!);
+const connectionString = process.env.NEON_DATABASE_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error(
+    'No database connection string was provided. Please set NEON_DATABASE_URL or DATABASE_URL in your environment.'
+  );
+}
+const sql = neon(connectionString);
 
 export async function GET() {
   try {
@@ -19,7 +25,7 @@ export async function GET() {
 
     console.log('✅ Session valid, fetching team members...');
     const teamMembers = await sql`
-      SELECT tm.*, u.name as creator_name, u.email as created_by_email
+      SELECT tm.*, u.name as creator_name, u.email as created_by_email, u.image as creator_avatar
       FROM team_members tm
       LEFT JOIN users u ON tm.created_by = u.id
       ORDER BY tm.created_at DESC
@@ -42,10 +48,6 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { name, location, timezone, flag } = body;
 
@@ -56,6 +58,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If user is not signed in, allow a public signup but mark as 'pending' and created_by = NULL
+    if (!session) {
+      const [newMember] = await sql`
+        INSERT INTO team_members (name, location, timezone, flag, created_by, status)
+        VALUES (${name}, ${location}, ${timezone}, ${flag || '🌍'}, NULL, 'pending')
+        RETURNING id, name, location, timezone, flag, status, created_at, created_by
+      `;
+      return NextResponse.json({ success: true, data: newMember, message: 'Created (pending approval)'});
+    }
+
+    // Authenticated creation (existing behavior)
     // Check if user is admin
     const [currentUser] = await sql`
       SELECT role FROM users WHERE id = ${session.user.id}
@@ -83,10 +96,7 @@ export async function POST(request: NextRequest) {
       RETURNING id, name, location, timezone, flag, status, created_at, created_by
     `;
 
-    return NextResponse.json({
-      success: true,
-      data: newMember
-    });
+    return NextResponse.json({ success: true, data: newMember });
   } catch (error) {
     console.error('Error creating team member:', error);
     return NextResponse.json(

@@ -50,6 +50,9 @@ export interface TeamMember {
   created_at: string;
   created_by?: number; // Added creator tracking (user ID)
   created_by_email?: string; // Added creator email for easier checks
+  creator_avatar?: string; // GitHub avatar URL
+  work_start?: string; // Optional working hours start in HH:mm (local)
+  work_end?: string; // Optional working hours end in HH:mm (local)
 }
 
 export interface CreateTeamMemberRequest {
